@@ -1,5 +1,10 @@
 package dht
 
+import (
+	"strconv"
+	"fmt"
+)
+
 type Contact struct {
 	ip   string
 	port string
@@ -31,7 +36,57 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 }
 
 func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
-	// TODO
+	
+	/* Just one node in the ring ->
+	   newNode is successor and predecessor of that node */
+	if dhtNode.successor == nil {
+		dhtNode.successor = newDHTNode
+		dhtNode.predecessor = newDHTNode
+		newDHTNode.successor = dhtNode
+		newDHTNode.predecessor = dhtNode
+	} else {
+		
+		/* More than one node */
+		valueNode,_ := strconv.Atoi(dhtNode.nodeId)
+		valueNodeNew,_ := strconv.Atoi(newDHTNode.nodeId)
+		valueNodeNext,_ := strconv.Atoi(dhtNode.successor.nodeId)
+		
+		/* Look if dhtNode is last node in the ring */
+		if valueNode > valueNodeNext {
+			
+			/* New node between last and first nodes */
+			if valueNodeNew > valueNode || valueNodeNew < valueNodeNext {
+				oldSuccessorDhtNode := dhtNode.successor
+				dhtNode.successor = newDHTNode
+				newDHTNode.successor = oldSuccessorDhtNode
+				newDHTNode.predecessor = dhtNode
+				oldSuccessorDhtNode.predecessor = newDHTNode
+			} else {
+				
+				/* New node is not after last node ->
+			       recursion with first node */
+				dhtNode.successor.addToRing(newDHTNode)
+			}
+		} else {
+			
+			/* Trying to insert between 2 consecutive nodes */
+			if valueNodeNew > valueNode && valueNodeNew < valueNodeNext {
+				
+				/* New node id bigger than dhtNode id and smaller than next node id ->
+			       inserction between those nodes */
+					oldSuccessorDhtNode := dhtNode.successor
+					dhtNode.successor = newDHTNode
+					newDHTNode.successor = oldSuccessorDhtNode
+					newDHTNode.predecessor = dhtNode
+					oldSuccessorDhtNode.predecessor = newDHTNode
+			} else {
+				
+				/* New node is not between those nodes ->
+			       recursion with next node */
+				dhtNode.successor.addToRing(newDHTNode)
+			}	
+		}
+	}
 }
 
 func (dhtNode *DHTNode) lookup(key string) *DHTNode {
@@ -50,7 +105,21 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 }
 
 func (dhtNode *DHTNode) printRing() {
-	// TODO
+	fmt.Println(dhtNode.nodeId)
+	
+	/* There is more than one node */
+	if dhtNode.successor != nil {
+		dhtNode.successor.printRingAux(dhtNode.nodeId)
+	}
+}
+
+func(dhtNode * DHTNode) printRingAux(nodeID string) {
+	if dhtNode.nodeId != nodeID {
+		
+		/* This is not the first node */
+		fmt.Println(dhtNode.nodeId)
+		dhtNode.successor.printRingAux(nodeID)
+	}
 }
 
 func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {
