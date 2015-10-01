@@ -17,7 +17,7 @@ type DHTNode struct {
 	contact     Contact
 }
 
-func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
+func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode := new(DHTNode)
 	dhtNode.contact.ip = ip
 	dhtNode.contact.port = port
@@ -35,7 +35,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	return dhtNode
 }
 
-func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
+func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 	
 	/* Just one node in the ring ->
 	   newNode is successor and predecessor of that node */
@@ -65,7 +65,7 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 				
 				/* New node is not after last node ->
 			       recursion with first node */
-				dhtNode.successor.addToRing(newDHTNode)
+				dhtNode.successor.AddToRing(newDHTNode)
 			}
 		} else {
 			
@@ -83,7 +83,7 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 				
 				/* New node is not between those nodes ->
 			       recursion with next node */
-				dhtNode.successor.addToRing(newDHTNode)
+				dhtNode.successor.AddToRing(newDHTNode)
 			}	
 		}
 	}
@@ -104,7 +104,7 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 	return false
 }
 
-func (dhtNode *DHTNode) printRing() {
+func (dhtNode *DHTNode) PrintRing() {
 	fmt.Println(dhtNode.nodeId)
 	
 	/* There is more than one node */
