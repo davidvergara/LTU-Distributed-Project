@@ -24,8 +24,8 @@ func main() {
 	node6b := dht.MakeDHTNode(&id6, "localhost", "1117")
 	node7b := dht.MakeDHTNode(&id7, "localhost", "1118")
 
-	node0b.AddToRing(node1b)
 	node1b.AddToRing(node2b)
+	node1b.AddToRing(node0b)
 	node1b.AddToRing(node3b)
 	node1b.AddToRing(node4b)
 	node4b.AddToRing(node5b)
