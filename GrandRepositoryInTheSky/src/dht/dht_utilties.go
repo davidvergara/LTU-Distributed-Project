@@ -2,9 +2,9 @@ package dht
 
 import (
 	"bytes"
-	//"crypto/sha1"
+	"crypto/sha1"
 	"fmt"
-	//"github.com/nu7hatch/gouuid"
+	"github.com/nu7hatch/gouuid"
 	"math/big"
 )
 
@@ -93,15 +93,14 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 }
 
 func generateNodeId() string {
-//	u, err := uuid.NewV4()
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	// calculate sha-1 hash
-//	hasher := sha1.New()
-//	hasher.Write([]byte(u.String()))
-//
-//	return fmt.Sprintf("%x", hasher.Sum(nil))
-return "hi"
+	u, err := uuid.NewV4()
+	if err != nil {
+		panic(err)
+	}
+
+	// calculate sha-1 hash
+	hasher := sha1.New()
+	hasher.Write([]byte(u.String()))
+
+	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
