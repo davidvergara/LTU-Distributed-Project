@@ -89,7 +89,7 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 	}
 }
 
-func (dhtNode *DHTNode) lookup(key string) *DHTNode {
+func (dhtNode *DHTNode) Lookup(key string) *DHTNode {
 	
 	if dhtNode.nodeId == key {
 		
@@ -98,9 +98,27 @@ func (dhtNode *DHTNode) lookup(key string) *DHTNode {
 	} else {
 		
 		/* We look the successor */
-		return dhtNode.successor.lookup(key)
+		return dhtNode.successor.Lookup(key)
 	}
 }
+
+/* GETTERS of the node */
+func (dhtNode *DHTNode) GetNodeId () string {
+	return dhtNode.nodeId
+}
+
+func (dhtNode *DHTNode) GetSuccessor () *DHTNode {
+	return dhtNode.successor
+}
+
+func (dhtNode *DHTNode) GetPredecessor () *DHTNode {
+	return dhtNode.predecessor
+}
+
+func (dhtNode *DHTNode) GetContact () Contact {
+	return dhtNode.contact
+}
+
 
 func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
 	// TODO

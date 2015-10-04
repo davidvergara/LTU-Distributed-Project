@@ -34,4 +34,11 @@ func main() {
 
 	fmt.Println("-> ring structure")
 	node1b.PrintRing()
+	
+	fmt.Println()
+	
+	nodeSearched := node3b.Lookup("01")
+	fmt.Print("Node searched (lookup) -> ")
+	fmt.Println(nodeSearched.GetNodeId())
+	
 }
