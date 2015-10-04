@@ -90,8 +90,16 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 }
 
 func (dhtNode *DHTNode) lookup(key string) *DHTNode {
-	// TODO
-	return dhtNode // XXX This is not correct obviously
+	
+	if dhtNode.nodeId == key {
+		
+		/* This is the node */
+		return dhtNode
+	} else {
+		
+		/* We look the successor */
+		return dhtNode.successor.lookup(key)
+	}
 }
 
 func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
