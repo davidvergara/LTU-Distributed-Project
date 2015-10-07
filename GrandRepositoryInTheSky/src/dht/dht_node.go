@@ -1,8 +1,8 @@
 package dht
 
 import (
-	"strconv"
 	"fmt"
+	"bytes"
 )
 
 
@@ -59,15 +59,18 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 	} else {
 		
 		/* More than one node */
-		valueNode,_ := strconv.Atoi(dhtNode.nodeId)
-		valueNodeNew,_ := strconv.Atoi(newDHTNode.nodeId)
-		valueNodeNext,_ := strconv.Atoi(dhtNode.successor.nodeId)
+		valueNode :=[]byte(dhtNode.nodeId)
+		valueNodeNew := []byte(newDHTNode.nodeId)
+		valueNodeNext := []byte(dhtNode.successor.nodeId)
 		
 		/* Look if dhtNode is last node in the ring */
-		if valueNode > valueNodeNext {
+		if bytes.Compare(valueNode, valueNodeNext) == 1 {
 			
 			/* New node between last and first nodes */
-			if valueNodeNew > valueNode || valueNodeNew < valueNodeNext {
+			if bytes.Compare(valueNodeNew,valueNode) == 1 ||
+				 bytes.Compare(valueNodeNew,valueNodeNext) == -1 {
+				
+				/* valueNodeNew > valueNode || valueNodeNew < valueNodeNext */
 				oldSuccessorDhtNode := dhtNode.successor
 				dhtNode.successor = newDHTNode
 				newDHTNode.successor = oldSuccessorDhtNode
@@ -82,7 +85,9 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 		} else {
 			
 			/* Trying to insert between 2 consecutive nodes */
-			if valueNodeNew > valueNode && valueNodeNew < valueNodeNext {
+			if bytes.Compare(valueNodeNew,valueNode) == 1 && 
+				bytes.Compare(valueNodeNew,valueNodeNext) == -1{
+				/* valueNodeNew > valueNode && valueNodeNew < valueNodeNext */
 				
 				/* New node id bigger than dhtNode id and smaller than next node id ->
 			       inserction between those nodes */
@@ -103,7 +108,7 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 
 func (dhtNode *DHTNode) Lookup(key string) *DHTNode {
 	
-	if dhtNode.nodeId == key {
+	if dhtNode.nodeId == key || dhtNode.successor == nil {
 		/* key == nodeID */
 		return dhtNode
 	} else if between([]byte(dhtNode.nodeId), 
