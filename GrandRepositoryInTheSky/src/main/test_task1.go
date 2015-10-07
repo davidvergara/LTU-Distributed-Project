@@ -11,7 +11,7 @@ func main() {
 	id2 := "02"
 	id3 := "03"
 	id4 := "04"
-	id5 := "05"
+//	id5 := "05"
 	id6 := "06"
 	id7 := "07"
 
@@ -20,7 +20,7 @@ func main() {
 	node2b := dht.MakeDHTNode(&id2, "localhost", "1113")
 	node3b := dht.MakeDHTNode(&id3, "localhost", "1114")
 	node4b := dht.MakeDHTNode(&id4, "localhost", "1115")
-	node5b := dht.MakeDHTNode(&id5, "localhost", "1116")
+//	node5b := dht.MakeDHTNode(&id5, "localhost", "1116")
 	node6b := dht.MakeDHTNode(&id6, "localhost", "1117")
 	node7b := dht.MakeDHTNode(&id7, "localhost", "1118")
 
@@ -28,7 +28,7 @@ func main() {
 	node1b.AddToRing(node0b)
 	node1b.AddToRing(node3b)
 	node1b.AddToRing(node4b)
-	node4b.AddToRing(node5b)
+//	node4b.AddToRing(node5b)
 	node3b.AddToRing(node6b)
 	node3b.AddToRing(node7b)
 
@@ -37,7 +37,7 @@ func main() {
 	
 	fmt.Println()
 	
-	nodeSearched := node3b.Lookup("01")
+	nodeSearched := node1b.Lookup("05")
 	fmt.Print("Node searched (lookup) -> ")
 	fmt.Println(nodeSearched.GetNodeId())
 	

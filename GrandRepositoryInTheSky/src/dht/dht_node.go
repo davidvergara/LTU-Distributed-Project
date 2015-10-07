@@ -92,12 +92,16 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 func (dhtNode *DHTNode) Lookup(key string) *DHTNode {
 	
 	if dhtNode.nodeId == key {
-		
-		/* This is the node */
+		/* key == nodeID */
 		return dhtNode
-	} else {
-		
-		/* We look the successor */
+	} else if between([]byte(dhtNode.nodeId), 
+		[]byte(dhtNode.successor.nodeId),
+		[]byte(key)){
+	
+		/* key between nodeID and its successor */
+		return dhtNode.successor
+	} else{
+		/* key not between nodeID and its successor */
 		return dhtNode.successor.Lookup(key)
 	}
 }
