@@ -37,7 +37,7 @@ func main() {
 	
 	fmt.Println()
 	
-	nodeSearched := node1b.Lookup("05")
+	nodeSearched := node1b.Lookup("115")
 	fmt.Print("Node searched (lookup) -> ")
 	fmt.Println(nodeSearched.GetNodeId())
 	

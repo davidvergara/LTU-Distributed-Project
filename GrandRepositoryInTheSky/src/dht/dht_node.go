@@ -5,6 +5,11 @@ import (
 	"fmt"
 )
 
+
+/* Consts */
+const SPACESIZE = 3
+
+
 type Contact struct {
 	ip   string
 	port string
@@ -15,6 +20,13 @@ type DHTNode struct {
 	successor   *DHTNode
 	predecessor *DHTNode
 	contact     Contact
+	fingers		[]*Finger
+}
+
+type Finger struct {
+	fingerId 		string
+	nodeIdent		string
+	fingerContact	Contact
 }
 
 func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
@@ -132,6 +144,11 @@ func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
 func (dhtNode *DHTNode) responsible(key string) bool {
 	// TODO
 	return false
+}
+
+func (dhtNode *DHTNode) PrintFinger(k int, m int){
+
+
 }
 
 func (dhtNode *DHTNode) PrintRing() {
