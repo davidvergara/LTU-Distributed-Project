@@ -25,8 +25,7 @@ type DHTNode struct {
 
 type Finger struct {
 	fingerId 		string
-	nodeIdent		string
-	fingerContact	Contact
+	nodeIdent		*DHTNode
 }
 
 func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
@@ -56,6 +55,7 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 		dhtNode.predecessor = newDHTNode
 		newDHTNode.successor = dhtNode
 		newDHTNode.predecessor = dhtNode
+		
 	} else {
 		
 		/* More than one node */
@@ -106,6 +106,18 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 	}
 }
 
+func (dhtNode *DHTNode) calcFingerTable (n string, m int){
+	//n = nodeId
+	//m = number of bits
+	dhtNode.fingers= [m]*Finger{}
+	for k:=1; k<=m; k++ {
+		idFinger, byteFinger :=calcFinger([]byte(n), k, m)
+		nodeFinger:= dhtNode.acceleratedLookupUsingFingers(idFinger)
+		dhtNode.fingers[k-1].fingerId=k
+		dhtNode.fingers[k-1].nodeIdent=nodeFinger
+	}
+}
+
 func (dhtNode *DHTNode) Lookup(key string) *DHTNode {
 	
 	if dhtNode.nodeId == key || dhtNode.successor == nil {
@@ -143,8 +155,40 @@ func (dhtNode *DHTNode) GetContact () Contact {
 
 func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
 	// TODO
-	return dhtNode // XXX This is not correct obviously
+	
+	
+	if dhtNode.nodeId == key || dhtNode.successor == nil {
+		/* key == nodeID */
+		return dhtNode
+	} else if between([]byte(dhtNode.nodeId), 
+		[]byte(dhtNode.successor.nodeId),
+		[]byte(key)){
+	
+		/* key between nodeID and its successor */
+		return dhtNode.successor
+	} else{
+		/* key not between nodeID and its successor */
+		
+		dhtMinNode:= dhtNode.calcNodeMinDist(key)
+		
+		
+		return dhtMinNode.acceleratedLookupUsingFingers(key)
+	}
+	
 }
+
+func (dhtNode *DHTNode) calcNodeMinDist(key string) *DHTNode {
+	dhtNodeMin := dhtNode.fingers[0].nodeIdent
+	minDist := distance([]byte(dhtNodeMin.nodeId), []byte(key),SPACESIZE)
+	for i:=0; i<len(dhtNode.fingers); i++ {
+		distance:= distance([]byte(dhtNode.fingers[i].nodeIdent.nodeId), []byte(key),SPACESIZE)
+		if minDist < distance {
+			minDist=distance
+		}
+	}
+	return dhtNodeMin
+}
+
 
 func (dhtNode *DHTNode) responsible(key string) bool {
 	// TODO
