@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"bytes"
 	"math/big"
+	"encoding/hex"
+
 )
 
 
@@ -57,14 +59,16 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 		dhtNode.predecessor = newDHTNode
 		newDHTNode.successor = dhtNode
 		newDHTNode.predecessor = dhtNode
-		dhtNode.updateFingerTables()
+//		fmt.Println("Solo un nodo -> actualizando finger table")
+		
+		newDHTNode.updateFingerTables()
 		
 	} else {
 		
 		/* More than one node */
-		valueNode :=[]byte(dhtNode.nodeId)
-		valueNodeNew := []byte(newDHTNode.nodeId)
-		valueNodeNext := []byte(dhtNode.successor.nodeId)
+		valueNode,_ :=hex.DecodeString(dhtNode.nodeId)
+		valueNodeNew,_ := hex.DecodeString(newDHTNode.nodeId)
+		valueNodeNext,_ := hex.DecodeString(dhtNode.successor.nodeId)
 		
 		/* Look if dhtNode is last node in the ring */
 		if bytes.Compare(valueNode, valueNodeNext) == 1 {
@@ -79,7 +83,7 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 				newDHTNode.successor = oldSuccessorDhtNode
 				newDHTNode.predecessor = dhtNode
 				oldSuccessorDhtNode.predecessor = newDHTNode
-				dhtNode.updateFingerTables()
+				newDHTNode.updateFingerTables()
 			} else {
 				
 				/* New node is not after last node ->
@@ -100,7 +104,7 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 					newDHTNode.successor = oldSuccessorDhtNode
 					newDHTNode.predecessor = dhtNode
 					oldSuccessorDhtNode.predecessor = newDHTNode
-					dhtNode.updateFingerTables()
+					newDHTNode.updateFingerTables()
 			} else {
 				
 				/* New node is not between those nodes ->
@@ -112,6 +116,7 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 }
 
 func (dhtNode *DHTNode) updateFingerTables() {
+//	fmt.Println("Calculating Finger table for " + dhtNode.nodeId)
 	dhtNode.calcFingerTable()
 	
 	/* There is more than one node */
@@ -131,11 +136,22 @@ func(dhtNode * DHTNode) updateFingerTablesAux(nodeID string) {
 
 func (dhtNode *DHTNode) calcFingerTable (){
 	for k:=1; k<=SPACESIZE; k++ {
-		idFinger,_ :=calcFinger([]byte(dhtNode.nodeId), k, SPACESIZE)
+		n,_ :=hex.DecodeString(dhtNode.nodeId)
+		idFinger,_ :=calcFinger(n, k, SPACESIZE)
+//		fmt.Println("idFinger = " + idFinger)
+
+//		idFinger,_ :=calcFinger([]byte(dhtNode.nodeId), k, SPACESIZE)
 		nodeFinger:= dhtNode.acceleratedLookupUsingFingers(idFinger)
+		dhtNode.fingers[k-1] = new(Finger)
 		dhtNode.fingers[k-1].fingerId=k
 		dhtNode.fingers[k-1].nodeIdent=nodeFinger
 	}
+//	fmt.Println("========================")
+//	fmt.Println("Nodo " + dhtNode.nodeId)
+//	fmt.Println(dhtNode.fingers[0].nodeIdent)
+//	fmt.Println(dhtNode.fingers[1].nodeIdent)
+//	fmt.Println(dhtNode.fingers[2].nodeIdent)
+//	fmt.Println("========================")
 }
 
 func (dhtNode *DHTNode) Lookup(key string) *DHTNode {
@@ -143,15 +159,20 @@ func (dhtNode *DHTNode) Lookup(key string) *DHTNode {
 	if dhtNode.nodeId == key || dhtNode.successor == nil {
 		/* key == nodeID */
 		return dhtNode
-	} else if between([]byte(dhtNode.nodeId), 
-		[]byte(dhtNode.successor.nodeId),
-		[]byte(key)){
-	
-		/* key between nodeID and its successor */
-		return dhtNode.successor
-	} else{
-		/* key not between nodeID and its successor */
-		return dhtNode.successor.Lookup(key)
+	} else {
+		
+		keyBytes,_ := hex.DecodeString(key)
+		nodeIDBytes,_ := hex.DecodeString(dhtNode.nodeId)
+		sucessorIDBytes,_ := hex.DecodeString(dhtNode.successor.nodeId)
+		
+		if between(nodeIDBytes, sucessorIDBytes, keyBytes){
+		
+			/* key between nodeID and its successor */
+			return dhtNode.successor
+		} else{
+			/* key not between nodeID and its successor */
+			return dhtNode.successor.Lookup(key)
+		}
 	}
 }
 
@@ -178,21 +199,31 @@ func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
 	
 	
 	if dhtNode.nodeId == key || dhtNode.successor == nil {
+//		fmt.Println("Entra en el if")
 		/* key == nodeID */
 		return dhtNode
 		
-	} else if between([]byte(dhtNode.nodeId), 
-		[]byte(dhtNode.successor.nodeId),
-		[]byte(key)){
-	
-		/* key between nodeID and its successor */
-		return dhtNode.successor
 	} else{
-		/* key not between nodeID and its successor */
 		
-		/* return the closest finger to the key */
-		dhtMinNode:= dhtNode.calcNodeMinDist(key)
-		return dhtMinNode.acceleratedLookupUsingFingers(key)
+		keyBytes,_ := hex.DecodeString(key)
+		nodeIDBytes,_ := hex.DecodeString(dhtNode.nodeId)
+		sucessorIDBytes,_ := hex.DecodeString(dhtNode.successor.nodeId)
+		
+		if between(nodeIDBytes, sucessorIDBytes, keyBytes){
+			
+//			fmt.Println("Entra en el else if")
+			/* key between nodeID and its successor */
+			return dhtNode.successor
+		} else{
+//			fmt.Println("Entra en el else")
+			/* key not between nodeID and its successor */
+			
+			/* return the closest finger to the key */
+			dhtMinNode:= dhtNode.calcNodeMinDist(key)
+			
+//			fmt.Println(dhtMinNode.nodeId)
+			return dhtMinNode.acceleratedLookupUsingFingers(key)
+		}
 	}
 	
 }
@@ -201,16 +232,51 @@ func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
  * Return the closest finger of dhtNode to the key
  */
 func (dhtNode *DHTNode) calcNodeMinDist(key string) *DHTNode {
-	dhtNodeMin := dhtNode.fingers[0].nodeIdent
-	minDist := distance([]byte(dhtNodeMin.nodeId), []byte(key),SPACESIZE)
-	for i:=0; i<len(dhtNode.fingers); i++ {
-		distance:= distance([]byte(dhtNode.fingers[i].nodeIdent.nodeId), []byte(key),SPACESIZE)
-		if minDist.Cmp(distance) == 1{
-			minDist=distance
-			dhtNodeMin = dhtNode.fingers[i].nodeIdent
+	dhtNodeMin := dhtNode.successor
+	/* Key to HEX */
+	keyBytes,_ := hex.DecodeString(key)
+	/* dhtNodeMin to HEX */
+	nodeIdBytes,_ := hex.DecodeString(dhtNodeMin.nodeId)
+	minDist := distance(nodeIdBytes, keyBytes,SPACESIZE)
+	for i,v := range dhtNode.fingers {
+		
+		if v!= nil {
+		
+			/* FingerID to HEX */
+			fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.nodeId)
+			distance:= distance(fingerBytes, keyBytes,SPACESIZE)
+			if minDist.Cmp(distance) == 1{
+				minDist=distance
+				dhtNodeMin = dhtNode.fingers[i].nodeIdent
+//				fmt.Println("Nodo " + dhtNode.nodeId + " Distancia minima -> " + dhtNodeMin.nodeId + " key " + key)
+			}
 		}
 	}
 	return dhtNodeMin
+	
+//	fmt.Println("Hola")
+//	fmt.Println(dhtNode.fingers)
+//	dhtNodeMin := dhtNode.fingers[0].nodeIdent
+//	fmt.Println("Adios")
+//	
+//	/* Key to HEX */
+//	keyBytes,_ := hex.DecodeString(key)
+//	
+//	/* dhtNodeMin to HEX */
+//	nodeIdBytes,_ := hex.DecodeString(dhtNodeMin.nodeId)
+//	
+//	minDist := distance(nodeIdBytes, keyBytes,SPACESIZE)
+//	for i:=0; i<len(dhtNode.fingers); i++ {
+//		
+//		/* FingerID to HEX */
+//		fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.nodeId)
+//		distance:= distance(fingerBytes, keyBytes,SPACESIZE)
+//		if minDist.Cmp(distance) == 1{
+//			minDist=distance
+//			dhtNodeMin = dhtNode.fingers[i].nodeIdent
+//		}
+//	}
+//	return dhtNodeMin
 }
 
 /* Return the responsible node for the key */
@@ -220,11 +286,12 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 }
 
 func (dhtNode *DHTNode) PrintFinger(k int, m int){
-	fmt.Println("calulcating result = (n+2^(k-1)) mod (2^m)")
+//	fmt.Println("calculating result = (n+2^(k-1)) mod (2^m)")
 
 	// convert the n to a bigint
 	nBigInt := big.Int{}
-	nBigInt.SetBytes([]byte(dhtNode.nodeId))
+	n,_ := hex.DecodeString(dhtNode.nodeId)
+	nBigInt.SetBytes(n)
 
 	fmt.Printf("n            %s\n",dhtNode.nodeId)
 
@@ -256,15 +323,25 @@ func (dhtNode *DHTNode) PrintFinger(k int, m int){
 	result.Mod(&sum, &ceil)
 	
 	resultBytes := result.Bytes()
+	if len(resultBytes) == 0 {
+		resultBytes = []byte{0}
+	}
 	resultHex := fmt.Sprintf("%x", resultBytes)
 
 	fmt.Printf("result       %s\n", result.String())
-	fmt.Printf("successor	 %s\n", dhtNode.acceleratedLookupUsingFingers(resultHex))
+	fmt.Printf("successor    %s\n", dhtNode.acceleratedLookupUsingFingers(resultHex).nodeId)
 }
 
 
 func (dhtNode *DHTNode) PrintRing() {
-	fmt.Println(dhtNode.nodeId)
+	fmt.Println("======================")
+	fmt.Println("Nodo " + dhtNode.nodeId)
+	for i:=1;i<=SPACESIZE;i++ {
+		fmt.Print("Finger ")
+		fmt.Println(i)
+		dhtNode.PrintFinger(i,SPACESIZE)
+		fmt.Println("----------------------")
+	}
 	
 	/* There is more than one node */
 	if dhtNode.successor != nil {
@@ -276,7 +353,14 @@ func(dhtNode * DHTNode) printRingAux(nodeID string) {
 	if dhtNode.nodeId != nodeID {
 		
 		/* This is not the first node */
-		fmt.Println(dhtNode.nodeId)
+		fmt.Println("======================")
+		fmt.Println("Nodo " + dhtNode.nodeId)
+		for i:=1;i<=SPACESIZE;i++ {
+			fmt.Print("Finger ")
+			fmt.Println(i)
+			dhtNode.PrintFinger(i,SPACESIZE)
+			fmt.Println("----------------------")
+		}
 		dhtNode.successor.printRingAux(nodeID)
 	}
 }
