@@ -55,14 +55,16 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 	/* Just one node in the ring ->
 	   newNode is successor and predecessor of that node */
 	if dhtNode.successor == nil {
-		dhtNode.successor = newDHTNode
-		dhtNode.predecessor = newDHTNode
-		newDHTNode.successor = dhtNode
-		newDHTNode.predecessor = dhtNode
+		if(dhtNode.nodeId == newDHTNode.nodeId){
+			fmt.Println("Error nodos iguales")
+		}else{
+			dhtNode.successor = newDHTNode
+			dhtNode.predecessor = newDHTNode
+			newDHTNode.successor = dhtNode
+			newDHTNode.predecessor = dhtNode
+			newDHTNode.updateFingerTables()
+		}
 //		fmt.Println("Solo un nodo -> actualizando finger table")
-		
-		newDHTNode.updateFingerTables()
-		
 	} else {
 		
 		/* More than one node */
@@ -70,47 +72,53 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 		valueNodeNew,_ := hex.DecodeString(newDHTNode.nodeId)
 		valueNodeNext,_ := hex.DecodeString(dhtNode.successor.nodeId)
 		
-		/* Look if dhtNode is last node in the ring */
-		if bytes.Compare(valueNode, valueNodeNext) == 1 {
+		if bytes.Compare(valueNode,valueNodeNew) == 0 ||
+			bytes.Compare(valueNodeNew,valueNodeNext) == 0 {
+				fmt.Println("Error iguales")
+		}else{
 			
-			/* New node between last and first nodes */
-			if bytes.Compare(valueNodeNew,valueNode) == 1 ||
-				 bytes.Compare(valueNodeNew,valueNodeNext) == -1 {
+			/* Look if dhtNode is last node in the ring */
+			if bytes.Compare(valueNode, valueNodeNext) == 1 {
 				
-				/* valueNodeNew > valueNode || valueNodeNew < valueNodeNext */
-				oldSuccessorDhtNode := dhtNode.successor
-				dhtNode.successor = newDHTNode
-				newDHTNode.successor = oldSuccessorDhtNode
-				newDHTNode.predecessor = dhtNode
-				oldSuccessorDhtNode.predecessor = newDHTNode
-				newDHTNode.updateFingerTables()
-			} else {
-				
-				/* New node is not after last node ->
-			       recursion with first node */
-				dhtNode.successor.AddToRing(newDHTNode)
-			}
-		} else {
-			
-			/* Trying to insert between 2 consecutive nodes */
-			if bytes.Compare(valueNodeNew,valueNode) == 1 && 
-				bytes.Compare(valueNodeNew,valueNodeNext) == -1{
-				/* valueNodeNew > valueNode && valueNodeNew < valueNodeNext */
-				
-				/* New node id bigger than dhtNode id and smaller than next node id ->
-			       inserction between those nodes */
+				/* New node between last and first nodes */
+				if bytes.Compare(valueNodeNew,valueNode) == 1 ||
+					 bytes.Compare(valueNodeNew,valueNodeNext) == -1 {
+					
+					/* valueNodeNew > valueNode || valueNodeNew < valueNodeNext */
 					oldSuccessorDhtNode := dhtNode.successor
 					dhtNode.successor = newDHTNode
 					newDHTNode.successor = oldSuccessorDhtNode
 					newDHTNode.predecessor = dhtNode
 					oldSuccessorDhtNode.predecessor = newDHTNode
 					newDHTNode.updateFingerTables()
+				} else {
+					
+					/* New node is not after last node ->
+				       recursion with first node */
+					dhtNode.successor.AddToRing(newDHTNode)
+				}
 			} else {
 				
-				/* New node is not between those nodes ->
-			       recursion with next node */
-				dhtNode.successor.AddToRing(newDHTNode)
-			}	
+				/* Trying to insert between 2 consecutive nodes */
+				if bytes.Compare(valueNodeNew,valueNode) == 1 && 
+					bytes.Compare(valueNodeNew,valueNodeNext) == -1{
+					/* valueNodeNew > valueNode && valueNodeNew < valueNodeNext */
+					
+					/* New node id bigger than dhtNode id and smaller than next node id ->
+				       inserction between those nodes */
+						oldSuccessorDhtNode := dhtNode.successor
+						dhtNode.successor = newDHTNode
+						newDHTNode.successor = oldSuccessorDhtNode
+						newDHTNode.predecessor = dhtNode
+						oldSuccessorDhtNode.predecessor = newDHTNode
+						newDHTNode.updateFingerTables()
+				} else {
+					
+					/* New node is not between those nodes ->
+				       recursion with next node */
+					dhtNode.successor.AddToRing(newDHTNode)
+				}	
+			}
 		}
 	}
 }
