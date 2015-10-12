@@ -213,7 +213,7 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *DHTNode {
 	return dhtNodeMin
 }
 
-
+/* Return the responsible node for the key */
 func (dhtNode *DHTNode) responsible(key string) bool {
 	nodeResponsible:= dhtNode.acceleratedLookupUsingFingers(key)
 	return nodeResponsible.nodeId == dhtNode.nodeId
