@@ -26,7 +26,13 @@ func distance(a, b []byte, bits int) *big.Int {
 
 func between(id1, id2, key []byte) bool {
 	// 0 if a==b, -1 if a < b, and +1 if a > b
-
+	fmt.Println("BETWEEN")
+	fmt.Print("id -> ")
+	fmt.Println(id1)
+	fmt.Print("id2 -> ")
+	fmt.Println(id2)
+	fmt.Print("key -> ")
+	fmt.Println(key)
 	if bytes.Compare(key, id1) == 0 { // key == id1
 		return true
 	}
@@ -56,11 +62,11 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 	nBigInt.SetBytes(n)
 //	fmt.Println(nBigInt.String())
 
-//	fmt.Printf("n            %s\n", nBigInt.String())
+	fmt.Printf("n            %s\n", nBigInt.String())
 //
-//	fmt.Printf("k            %d\n", k)
+	fmt.Printf("k            %d\n", k)
 //
-//	fmt.Printf("m            %d\n", m)
+	fmt.Printf("m            %d\n", m)
 
 	// get the right addend, i.e. 2^(k-1)
 	two := big.NewInt(2)
@@ -85,7 +91,7 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 	result := big.Int{}
 	result.Mod(&sum, &ceil)
 
-//	fmt.Printf("result       %s\n", result.String())
+	fmt.Printf("result       %s\n", result.String())
 
 	resultBytes := result.Bytes()
 	if len(resultBytes) == 0 {
@@ -93,7 +99,7 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 	}
 	resultHex := fmt.Sprintf("%x", resultBytes)
 
-//	fmt.Printf("result (hex) %s\n", resultHex)
+	fmt.Printf("result (hex) %s\n", resultHex)
 
 	return resultHex, resultBytes
 }
