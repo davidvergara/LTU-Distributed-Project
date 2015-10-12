@@ -24,7 +24,7 @@ type DHTNode struct {
 }
 
 type Finger struct {
-	fingerId 		string
+	fingerId 		int
 	nodeIdent		*DHTNode
 }
 
@@ -42,6 +42,7 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 
 	dhtNode.successor = nil
 	dhtNode.predecessor = nil
+	dhtNode.fingers = make([]*Finger, SPACESIZE)
 
 	return dhtNode
 }
@@ -55,6 +56,7 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 		dhtNode.predecessor = newDHTNode
 		newDHTNode.successor = dhtNode
 		newDHTNode.predecessor = dhtNode
+		dhtNode.updateFingerTables()
 		
 	} else {
 		
@@ -76,6 +78,7 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 				newDHTNode.successor = oldSuccessorDhtNode
 				newDHTNode.predecessor = dhtNode
 				oldSuccessorDhtNode.predecessor = newDHTNode
+				dhtNode.updateFingerTables()
 			} else {
 				
 				/* New node is not after last node ->
@@ -96,6 +99,7 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 					newDHTNode.successor = oldSuccessorDhtNode
 					newDHTNode.predecessor = dhtNode
 					oldSuccessorDhtNode.predecessor = newDHTNode
+					dhtNode.updateFingerTables()
 			} else {
 				
 				/* New node is not between those nodes ->
@@ -106,12 +110,27 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 	}
 }
 
-func (dhtNode *DHTNode) calcFingerTable (n string, m int){
-	//n = nodeId
-	//m = number of bits
-	dhtNode.fingers= [m]*Finger{}
-	for k:=1; k<=m; k++ {
-		idFinger, byteFinger :=calcFinger([]byte(n), k, m)
+func (dhtNode *DHTNode) updateFingerTables() {
+	dhtNode.calcFingerTable()
+	
+	/* There is more than one node */
+	if dhtNode.successor != nil {
+		dhtNode.successor.updateFingerTablesAux(dhtNode.nodeId)
+	}
+}
+
+func(dhtNode * DHTNode) updateFingerTablesAux(nodeID string) {
+	if dhtNode.nodeId != nodeID {
+		
+		/* This is not the first node */
+		dhtNode.calcFingerTable()
+		dhtNode.successor.updateFingerTablesAux(nodeID)
+	}
+}
+
+func (dhtNode *DHTNode) calcFingerTable (){
+	for k:=1; k<=SPACESIZE; k++ {
+		idFinger,_ :=calcFinger([]byte(dhtNode.nodeId), k, SPACESIZE)
 		nodeFinger:= dhtNode.acceleratedLookupUsingFingers(idFinger)
 		dhtNode.fingers[k-1].fingerId=k
 		dhtNode.fingers[k-1].nodeIdent=nodeFinger
@@ -160,6 +179,7 @@ func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
 	if dhtNode.nodeId == key || dhtNode.successor == nil {
 		/* key == nodeID */
 		return dhtNode
+		
 	} else if between([]byte(dhtNode.nodeId), 
 		[]byte(dhtNode.successor.nodeId),
 		[]byte(key)){
@@ -169,21 +189,24 @@ func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
 	} else{
 		/* key not between nodeID and its successor */
 		
+		/* return the closest finger to the key */
 		dhtMinNode:= dhtNode.calcNodeMinDist(key)
-		
-		
 		return dhtMinNode.acceleratedLookupUsingFingers(key)
 	}
 	
 }
 
+/**
+ * Return the closest finger of dhtNode to the key
+ */
 func (dhtNode *DHTNode) calcNodeMinDist(key string) *DHTNode {
 	dhtNodeMin := dhtNode.fingers[0].nodeIdent
 	minDist := distance([]byte(dhtNodeMin.nodeId), []byte(key),SPACESIZE)
 	for i:=0; i<len(dhtNode.fingers); i++ {
 		distance:= distance([]byte(dhtNode.fingers[i].nodeIdent.nodeId), []byte(key),SPACESIZE)
-		if minDist < distance {
+		if minDist.Cmp(distance) == 1{
 			minDist=distance
+			dhtNodeMin = dhtNode.fingers[i].nodeIdent
 		}
 	}
 	return dhtNodeMin
