@@ -3,6 +3,7 @@ package dht
 import (
 	"fmt"
 	"bytes"
+	"math/big"
 )
 
 
@@ -214,14 +215,53 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *DHTNode {
 
 
 func (dhtNode *DHTNode) responsible(key string) bool {
-	// TODO
-	return false
+	nodeResponsible:= dhtNode.acceleratedLookupUsingFingers(key)
+	return nodeResponsible.nodeId == dhtNode.nodeId
 }
 
 func (dhtNode *DHTNode) PrintFinger(k int, m int){
+	fmt.Println("calulcating result = (n+2^(k-1)) mod (2^m)")
 
+	// convert the n to a bigint
+	nBigInt := big.Int{}
+	nBigInt.SetBytes([]byte(dhtNode.nodeId))
 
+	fmt.Printf("n            %s\n",dhtNode.nodeId)
+
+	fmt.Printf("k            %d\n", k)
+
+	fmt.Printf("m            %d\n", m)
+
+	// get the right addend, i.e. 2^(k-1)
+	two := big.NewInt(2)
+	addend := big.Int{}
+	addend.Exp(two, big.NewInt(int64(k-1)), nil)
+
+	fmt.Printf("2^(k-1)      %s\n", addend.String())
+
+	// calculate sum
+	sum := big.Int{}
+	sum.Add(&nBigInt, &addend)
+
+	fmt.Printf("(n+2^(k-1))  %s\n", sum.String())
+
+	// calculate 2^m
+	ceil := big.Int{}
+	ceil.Exp(two, big.NewInt(int64(m)), nil)
+
+	fmt.Printf("2^m          %s\n", ceil.String())
+
+	// apply the mod
+	result := big.Int{}
+	result.Mod(&sum, &ceil)
+	
+	resultBytes := result.Bytes()
+	resultHex := fmt.Sprintf("%x", resultBytes)
+
+	fmt.Printf("result       %s\n", result.String())
+	fmt.Printf("successor	 %s\n", dhtNode.acceleratedLookupUsingFingers(resultHex))
 }
+
 
 func (dhtNode *DHTNode) PrintRing() {
 	fmt.Println(dhtNode.nodeId)
