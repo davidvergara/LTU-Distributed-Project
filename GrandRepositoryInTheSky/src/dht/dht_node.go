@@ -5,9 +5,7 @@ import (
 	"bytes"
 	"math/big"
 	"encoding/hex"
-
 )
-
 
 /* Consts */
 const SPACESIZE = 3
@@ -76,7 +74,6 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
 			bytes.Compare(valueNodeNew,valueNodeNext) == 0 {
 				fmt.Println("Error iguales")
 		}else{
-			
 			/* Look if dhtNode is last node in the ring */
 			if bytes.Compare(valueNode, valueNodeNext) == 1 {
 				
@@ -204,7 +201,7 @@ func (dhtNode *DHTNode) GetContact () Contact {
 
 func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
 	// TODO
-	
+//	fmt.Println("Llave "+key)
 	
 	if dhtNode.nodeId == key || dhtNode.successor == nil {
 //		fmt.Println("Entra en el if")
@@ -262,29 +259,6 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *DHTNode {
 	}
 	return dhtNodeMin
 	
-//	fmt.Println("Hola")
-//	fmt.Println(dhtNode.fingers)
-//	dhtNodeMin := dhtNode.fingers[0].nodeIdent
-//	fmt.Println("Adios")
-//	
-//	/* Key to HEX */
-//	keyBytes,_ := hex.DecodeString(key)
-//	
-//	/* dhtNodeMin to HEX */
-//	nodeIdBytes,_ := hex.DecodeString(dhtNodeMin.nodeId)
-//	
-//	minDist := distance(nodeIdBytes, keyBytes,SPACESIZE)
-//	for i:=0; i<len(dhtNode.fingers); i++ {
-//		
-//		/* FingerID to HEX */
-//		fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.nodeId)
-//		distance:= distance(fingerBytes, keyBytes,SPACESIZE)
-//		if minDist.Cmp(distance) == 1{
-//			minDist=distance
-//			dhtNodeMin = dhtNode.fingers[i].nodeIdent
-//		}
-//	}
-//	return dhtNodeMin
 }
 
 /* Return the responsible node for the key */
@@ -344,12 +318,12 @@ func (dhtNode *DHTNode) PrintFinger(k int, m int){
 func (dhtNode *DHTNode) PrintRing() {
 	fmt.Println("======================")
 	fmt.Println("Nodo " + dhtNode.nodeId)
-	for i:=1;i<=SPACESIZE;i++ {
-		fmt.Print("Finger ")
-		fmt.Println(i)
-		dhtNode.PrintFinger(i,SPACESIZE)
-		fmt.Println("----------------------")
-	}
+//	for i:=1;i<=SPACESIZE;i++ {
+//		fmt.Print("Finger ")
+//		fmt.Println(i)
+//		dhtNode.PrintFinger(i,SPACESIZE)
+//		fmt.Println("----------------------")
+//	}
 	
 	/* There is more than one node */
 	if dhtNode.successor != nil {
@@ -363,12 +337,12 @@ func(dhtNode * DHTNode) printRingAux(nodeID string) {
 		/* This is not the first node */
 		fmt.Println("======================")
 		fmt.Println("Nodo " + dhtNode.nodeId)
-		for i:=1;i<=SPACESIZE;i++ {
-			fmt.Print("Finger ")
-			fmt.Println(i)
-			dhtNode.PrintFinger(i,SPACESIZE)
-			fmt.Println("----------------------")
-		}
+//		for i:=1;i<=SPACESIZE;i++ {
+//			fmt.Print("Finger ")
+//			fmt.Println(i)
+//			dhtNode.PrintFinger(i,SPACESIZE)
+//			fmt.Println("----------------------")
+//		}
 		dhtNode.successor.printRingAux(nodeID)
 	}
 }

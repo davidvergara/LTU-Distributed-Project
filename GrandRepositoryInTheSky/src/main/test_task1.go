@@ -5,7 +5,7 @@ import (
 	"dht"
 )
 
-func main() {
+func task1 () {
 	id0 := "00"
 	id1 := "01"
 //	id2 := "02"
@@ -46,8 +46,25 @@ func main() {
 	
 	fmt.Println()
 	
-	nodeSearched := node1b.Lookup("08")
-	fmt.Print("Node searched (lookup) -> ")
-	fmt.Println(nodeSearched.GetNodeId())
+	//nodeSearched := node1b.Lookup("08")
+//	fmt.Print("Node searched (lookup) -> ")
+	//fmt.Println(nodeSearched.GetNodeId())
+}
+
+func task2() {
+	node0b := dht.MakeDHTNode(nil, "localhost", "1111")
 	
+	for i:=0; i<50; i++{
+		node1b := dht.MakeDHTNode(nil, "localhost", "1111")
+		node0b.AddToRing(node1b)
+		fmt.Printf("Node %d added \n",i)
+	}
+	
+	fmt.Println("-> ring structure")
+	node0b.PrintRing()
+}
+
+func main() {
+	task1()
+	//task2()
 }
