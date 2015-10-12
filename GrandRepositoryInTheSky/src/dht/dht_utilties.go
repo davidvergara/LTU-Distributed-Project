@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/nu7hatch/gouuid"
 	"math/big"
+//	"encoding/hex"
 )
 
 func distance(a, b []byte, bits int) *big.Int {
@@ -47,47 +48,52 @@ func between(id1, id2, key []byte) bool {
 
 // (n + 2^(k-1)) mod (2^m)
 func calcFinger(n []byte, k int, m int) (string, []byte) {
-	fmt.Println("calculating result = (n+2^(k-1)) mod (2^m)")
+//	fmt.Println("calculating result = (n+2^(k-1)) mod (2^m)")
+//	fmt.Println(n)
 
 	// convert the n to a bigint
 	nBigInt := big.Int{}
 	nBigInt.SetBytes(n)
+//	fmt.Println(nBigInt.String())
 
-	fmt.Printf("n            %s\n", nBigInt.String())
-
-	fmt.Printf("k            %d\n", k)
-
-	fmt.Printf("m            %d\n", m)
+//	fmt.Printf("n            %s\n", nBigInt.String())
+//
+//	fmt.Printf("k            %d\n", k)
+//
+//	fmt.Printf("m            %d\n", m)
 
 	// get the right addend, i.e. 2^(k-1)
 	two := big.NewInt(2)
 	addend := big.Int{}
 	addend.Exp(two, big.NewInt(int64(k-1)), nil)
 
-	//fmt.Printf("2^(k-1)      %s\n", addend.String())
+//	fmt.Printf("2^(k-1)      %s\n", addend.String())
 
 	// calculate sum
 	sum := big.Int{}
 	sum.Add(&nBigInt, &addend)
 
-	//fmt.Printf("(n+2^(k-1))  %s\n", sum.String())
+//	fmt.Printf("(n+2^(k-1))  %s\n", sum.String())
 
 	// calculate 2^m
 	ceil := big.Int{}
 	ceil.Exp(two, big.NewInt(int64(m)), nil)
 
-	//fmt.Printf("2^m          %s\n", ceil.String())
+//	fmt.Printf("2^m          %s\n", ceil.String())
 
 	// apply the mod
 	result := big.Int{}
 	result.Mod(&sum, &ceil)
 
-	//fmt.Printf("result       %s\n", result.String())
+//	fmt.Printf("result       %s\n", result.String())
 
 	resultBytes := result.Bytes()
+	if len(resultBytes) == 0 {
+		resultBytes = []byte{0}
+	}
 	resultHex := fmt.Sprintf("%x", resultBytes)
 
-	//fmt.Printf("result (hex) %s\n", resultHex)
+//	fmt.Printf("result (hex) %s\n", resultHex)
 
 	return resultHex, resultBytes
 }
