@@ -220,7 +220,7 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 }
 
 func (dhtNode *DHTNode) PrintFinger(k int, m int){
-	fmt.Println("calulcating result = (n+2^(k-1)) mod (2^m)")
+	fmt.Println("calculating result = (n+2^(k-1)) mod (2^m)")
 
 	// convert the n to a bigint
 	nBigInt := big.Int{}
