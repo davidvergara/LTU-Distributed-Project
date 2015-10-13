@@ -8,7 +8,7 @@ import (
 )
 
 /* Consts */
-const SPACESIZE = 3
+const SPACESIZE = 160
 
 
 type Contact struct {
@@ -246,15 +246,20 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *DHTNode {
 	for i,v := range dhtNode.fingers {
 		
 		if v!= nil {
-		
-			/* FingerID to HEX */
 			fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.nodeId)
-			distance:= distance(fingerBytes, keyBytes,SPACESIZE)
-			if minDist.Cmp(distance) == 1{
-				minDist=distance
-				dhtNodeMin = dhtNode.fingers[i].nodeIdent
-//				fmt.Println("Nodo " + dhtNode.nodeId + " Distancia minima -> " + dhtNodeMin.nodeId + " key " + key)
+			
+			if bytes.Compare(fingerBytes,nodeIdBytes) != 0 {
+				if between(fingerBytes, nodeIdBytes,keyBytes){
+					/* FingerID to HEX */
+					distance:= distance(fingerBytes, keyBytes,SPACESIZE)
+					if minDist.Cmp(distance) == 1{
+						minDist=distance
+						dhtNodeMin = dhtNode.fingers[i].nodeIdent
+						//fmt.Println("Nodo " + dhtNode.nodeId + " Distancia minima -> " + dhtNodeMin.nodeId + " key " + key)
+					}
+				}
 			}
+			
 		}
 	}
 	return dhtNodeMin

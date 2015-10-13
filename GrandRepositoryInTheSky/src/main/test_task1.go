@@ -54,7 +54,7 @@ func task1 () {
 func task2() {
 	node0b := dht.MakeDHTNode(nil, "localhost", "1111")
 	
-	for i:=0; i<50; i++{
+	for i:=0; i<500; i++{
 		node1b := dht.MakeDHTNode(nil, "localhost", "1111")
 		node0b.AddToRing(node1b)
 		fmt.Printf("Node %d added \n",i)
@@ -65,6 +65,6 @@ func task2() {
 }
 
 func main() {
-	task1()
-	//task2()
+	//task1()
+	task2()
 }

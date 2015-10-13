@@ -62,11 +62,11 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 	nBigInt.SetBytes(n)
 //	fmt.Println(nBigInt.String())
 
-	fmt.Printf("n            %s\n", nBigInt.String())
-//
-	fmt.Printf("k            %d\n", k)
-//
-	fmt.Printf("m            %d\n", m)
+//	fmt.Printf("n            %s\n", nBigInt.String())
+////
+//	fmt.Printf("k            %d\n", k)
+////
+//	fmt.Printf("m            %d\n", m)
 
 	// get the right addend, i.e. 2^(k-1)
 	two := big.NewInt(2)
@@ -91,7 +91,7 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 	result := big.Int{}
 	result.Mod(&sum, &ceil)
 
-	fmt.Printf("result       %s\n", result.String())
+	//fmt.Printf("result       %s\n", result.String())
 
 	resultBytes := result.Bytes()
 	if len(resultBytes) == 0 {
@@ -99,7 +99,7 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 	}
 	resultHex := fmt.Sprintf("%x", resultBytes)
 
-	fmt.Printf("result (hex) %s\n", resultHex)
+	//fmt.Printf("result (hex) %s\n", resultHex)
 
 	return resultHex, resultBytes
 }
