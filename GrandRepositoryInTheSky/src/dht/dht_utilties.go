@@ -26,13 +26,13 @@ func distance(a, b []byte, bits int) *big.Int {
 
 func between(id1, id2, key []byte) bool {
 	// 0 if a==b, -1 if a < b, and +1 if a > b
-	fmt.Println("BETWEEN")
-	fmt.Print("id -> ")
-	fmt.Println(id1)
-	fmt.Print("id2 -> ")
-	fmt.Println(id2)
-	fmt.Print("key -> ")
-	fmt.Println(key)
+//	fmt.Println("BETWEEN")
+//	fmt.Print("id -> ")
+//	fmt.Println(id1)
+//	fmt.Print("id2 -> ")
+//	fmt.Println(id2)
+//	fmt.Print("key -> ")
+//	fmt.Println(key)
 	if bytes.Compare(key, id1) == 0 { // key == id1
 		return true
 	}
