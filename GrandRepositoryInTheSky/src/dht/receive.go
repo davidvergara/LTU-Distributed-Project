@@ -3,13 +3,10 @@ package dht
 
 import (
 	"net"
-
 	"fmt"
-    "io/ioutil"
-
 	"runtime"
 	"encoding/json"
-	
+	"strconv"
 )
 
 //type nodeReceiver struct{
@@ -43,16 +40,13 @@ func (receive *DHTNode) StartListenServer(){
 
 			message := buffer[0:readed]
 
-			receive.decryptMessage(message)
+			go receive.decryptMessage(message)
 			runtime.Gosched()
 		}
 	}()
 }
 
 func (receive *DHTNode) decryptMessage (bytesReceived []byte){
-	d1 := []byte("hello\ngo\n")
-    es := ioutil.WriteFile("/Temp/sddsd", d1, 0644)
-     fmt.Println(es)
 	var message Msg
 	err := json.Unmarshal(bytesReceived, &message)
 	if err != nil {
@@ -60,35 +54,47 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 	}
 	switch 
 	{
-	case message.Type == "LOOKUP":
-	{
-		//Llamar funcion LOOKUP
+		case message.Type == "LOOKUP":
+		{
+			receive.receiveLookup(message)
+		}
+		case message.Type == "LOOKUPANSWER":
+		{
+			receive.receiveLookupAnswer(message)
+		}
+		case message.Type == "UPDATEFINGERS":
+		{
+			//Llamar funcion UPDATEFINGERS
+		}
+		case message.Type == "ADDRING":
+		{
+			//Llamar funcion ADDRING
+		}
+		case message.Type == "SETPREDECESSOR":
+		{
+			//Llamar funcion SETPREDECESSOR
+		}
+		case message.Type == "SETSUCCESSOR":
+		{
+			//Llamar funcion SETSUCCESSOR
+		}
+		case message.Type == "PRINTRING":
+		{
+			//Llamar funcion PRINTRING
+		}
+		default: 
+		{
+			fmt.Println("Wrong message")
+		}
 	}
-	case message.Type == "LOOKUPRESPONDE":
-	{
-		//Llamar funcion SETSUCCESSOR
-	}
-	case message.Type == "UPDATEFINGERS":
-	{
-		//Llamar funcion UPDATEFINGERS
-	}
-	case message.Type == "ADDRING":
-	{
-		//Llamar funcion ADDRING
-	}
-	case message.Type == "SETPREDECESSOR":
-	{
-		//Llamar funcion SETPREDECESSOR
-	}
-	case message.Type == "SETSUCCESSOR":
-	{
-		//Llamar funcion SETSUCCESSOR
-	}
-	default: 
-	{
-		fmt.Println("Wrong message")
-	}
-	}
-	
-
 }
+	
+func (receive *DHTNode) receiveLookup (message Msg){
+	receive.Lookup(message.Args["key"],message.Source, message.Args["lookUpId"]) 
+}
+
+func (receive *DHTNode) receiveLookupAnswer (message Msg){
+	idLookup,_ := strconv.Atoi(message.Args["lookUpId"])
+	LookupRequest[idLookup] <- message.Source
+}
+

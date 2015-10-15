@@ -1,12 +1,15 @@
 package dht
 
 import (
-
+	"sync"
 )
 
 /* Network variables */
-var LocalIp string
-var LocalPort string
+var LocalIp 		string
+var LocalPort 		string
+var NumLookup = 0
+var LookupRequest 	map[int]chan *NetworkNode
+var mutexNumLookup = &sync.Mutex{}
 
 type NetworkNode struct {
 	NodeId string
@@ -18,6 +21,6 @@ type Msg struct {
 	Source *NetworkNode
 	Dest *NetworkNode
 	Type string
-//	Args map[string]string
+	Args map[string]string
 }
 
