@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"dht"
+	"time"
 	    "io/ioutil"
 )
 //
@@ -66,6 +67,10 @@ import (
 //}
 //
 func main() {
+	go func() {
+
+		
+	}()
 	fmt.Println("hola")
 	
 	
@@ -77,27 +82,22 @@ func main() {
 	
 	
 	id0 := "00"
-//	id1 := "01"
+	id1 := "01"
 
 
 	node0b := dht.MakeDHTNode(&id0, "localhost", "1111")
-	//node1b := dht.MakeDHTNode(&id1, "localhost", "1112")
+	node1b := dht.MakeDHTNode(&id1, "localhost", "1112")
 	
 	node0b.StartListenServer()
 
 
- //	mess := dht.Msg{Source: node1b, Dest: node0b,Type: "LOOKUP"}
+ 	mess := dht.Msg{Source: node1b, Dest: node0b,Type: "LOOKUPs"}
 
 fmt.Println("envio")
 
-	//dht.Send(node0b, mess)
-	go func() {
-			d1 := []byte("hello\ngo\n")
-    es := ioutil.WriteFile("/Temp/sddsd", d1, 0644)
-     fmt.Println(es)
-
-
-		
-	}()
+	dht.Send(node0b, mess)
+	
 fmt.Println("envio")
+ time.Sleep(30000000000 * time.Millisecond)
+
 }

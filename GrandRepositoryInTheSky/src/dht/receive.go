@@ -28,16 +28,19 @@ func (receive *DHTNode) StartListenServer(){
 	if err != nil {
 		panic(err)
 	}
+	
 	go func() {
+		
 		for {
+			
 			buffer :=make([]byte,1024) 
 			readed, err := conn.Read(buffer)
+			fmt.Println("ssdsdsdsdsdsdsdsdsd")
 			if err != nil {
+				
 				panic(err)
 			}
-			d1 := []byte("hello\ngo\n")
-    es := ioutil.WriteFile("/Temp/sdssssss", d1, 0644)
-     fmt.Println(es)
+
 			message := buffer[0:readed]
 
 			receive.decryptMessage(message)
@@ -59,14 +62,35 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 	{
 	case message.Type == "LOOKUP":
 	{
-		 d1 := []byte("hello\ngo\n")
-    err := ioutil.WriteFile("/Temp/dat1", d1, 0644)
-     fmt.Println(err)
-		fmt.Println("recibido")
+		//Llamar funcion LOOKUP
+	}
+	case message.Type == "UPDATEFINGERS":
+	{
+		//Llamar funcion UPDATEFINGERS
+	}
+	case message.Type == "ADDRING":
+	{
+		//Llamar funcion ADDRING
+	}
+	case message.Type == "UPDATEFINGERS":
+	{
+		//Llamar funcion UPDATEFINGERS
+	}
+	case message.Type == "SETPREDECESSOR":
+	{
+		//Llamar funcion SETPREDECESSOR
+	}
+	case message.Type == "SETSUCCESSOR":
+	{
+		//Llamar funcion SETSUCCESSOR
+	}
+	case message.Type == "SETSUCCESSOR":
+	{
+		//Llamar funcion SETSUCCESSOR
 	}
 	default: 
 	{
-		fmt.Println("nada")
+		fmt.Println("Wrong message")
 	}
 	}
 	
