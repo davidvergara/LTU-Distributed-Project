@@ -64,6 +64,10 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 	{
 		//Llamar funcion LOOKUP
 	}
+	case message.Type == "LOOKUPRESPONDE":
+	{
+		//Llamar funcion SETSUCCESSOR
+	}
 	case message.Type == "UPDATEFINGERS":
 	{
 		//Llamar funcion UPDATEFINGERS
@@ -72,17 +76,9 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 	{
 		//Llamar funcion ADDRING
 	}
-	case message.Type == "UPDATEFINGERS":
-	{
-		//Llamar funcion UPDATEFINGERS
-	}
 	case message.Type == "SETPREDECESSOR":
 	{
 		//Llamar funcion SETPREDECESSOR
-	}
-	case message.Type == "SETSUCCESSOR":
-	{
-		//Llamar funcion SETSUCCESSOR
 	}
 	case message.Type == "SETSUCCESSOR":
 	{

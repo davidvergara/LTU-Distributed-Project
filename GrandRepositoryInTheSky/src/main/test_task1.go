@@ -67,37 +67,23 @@ import (
 //}
 //
 func main() {
-	go func() {
-
-		
-	}()
 	fmt.Println("hola")
-	
-	
 	
 	d1 := []byte("hello\ngo\n")
     err := ioutil.WriteFile("/Temp/dat1", d1, 0644)
-     fmt.Println(err)
-	
-	
+    fmt.Println(err)
 	
 	id0 := "00"
 	id1 := "01"
-
 
 	node0b := dht.MakeDHTNode(&id0, "localhost", "1111")
 	node1b := dht.MakeDHTNode(&id1, "localhost", "1112")
 	
 	node0b.StartListenServer()
-
-
  	mess := dht.Msg{Source: node1b, Dest: node0b,Type: "LOOKUPs"}
-
-fmt.Println("envio")
 
 	dht.Send(node0b, mess)
 	
-fmt.Println("envio")
  time.Sleep(30000000000 * time.Millisecond)
 
 }
