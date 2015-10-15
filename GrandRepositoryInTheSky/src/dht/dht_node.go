@@ -323,12 +323,12 @@ func (dhtNode *DHTNode) PrintFinger(k int, m int){
 func (dhtNode *DHTNode) PrintRing() {
 	fmt.Println("======================")
 	fmt.Println("Nodo " + dhtNode.nodeId)
-//	for i:=1;i<=SPACESIZE;i++ {
-//		fmt.Print("Finger ")
-//		fmt.Println(i)
-//		dhtNode.PrintFinger(i,SPACESIZE)
-//		fmt.Println("----------------------")
-//	}
+	for i:=1;i<=SPACESIZE;i++ {
+		fmt.Print("Finger ")
+		fmt.Println(i)
+		dhtNode.PrintFinger(i,SPACESIZE)
+		fmt.Println("----------------------")
+	}
 	
 	/* There is more than one node */
 	if dhtNode.successor != nil {
@@ -342,12 +342,12 @@ func(dhtNode * DHTNode) printRingAux(nodeID string) {
 		/* This is not the first node */
 		fmt.Println("======================")
 		fmt.Println("Nodo " + dhtNode.nodeId)
-//		for i:=1;i<=SPACESIZE;i++ {
-//			fmt.Print("Finger ")
-//			fmt.Println(i)
-//			dhtNode.PrintFinger(i,SPACESIZE)
-//			fmt.Println("----------------------")
-//		}
+		for i:=1;i<=SPACESIZE;i++ {
+			fmt.Print("Finger ")
+			fmt.Println(i)
+			dhtNode.PrintFinger(i,SPACESIZE)
+			fmt.Println("----------------------")
+		}
 		dhtNode.successor.printRingAux(nodeID)
 	}
 }
