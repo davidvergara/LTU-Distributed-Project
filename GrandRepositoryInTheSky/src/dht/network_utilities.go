@@ -15,8 +15,8 @@ type NetworkNode struct {
 }
 
 type Msg struct {
-	Source *DHTNode
-	Dest *DHTNode
+	Source *NetworkNode
+	Dest *NetworkNode
 	Type string
 //	Args map[string]string
 }

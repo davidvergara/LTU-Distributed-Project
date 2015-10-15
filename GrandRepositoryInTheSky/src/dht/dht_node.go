@@ -18,8 +18,8 @@ type Contact struct {
 
 type DHTNode struct {
 	nodeId   		string
-	successor  		*DHTNode
-	predecessor		*DHTNode
+	successor  		*NetworkNode
+	predecessor		*NetworkNode
 	contact			Contact
 	fingers			[]*Finger
 //	communication 	
@@ -27,7 +27,7 @@ type DHTNode struct {
 
 type Finger struct {
 	fingerId 		int
-	nodeIdent		*DHTNode
+	nodeIdent		*NetworkNode
 }
 
 func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
@@ -362,6 +362,14 @@ func (dhtNode *DHTNode) GetPort () string {
 //		dhtNode.successor.printRingAux(nodeID)
 //	}
 //}
+
+func (dhtNode *DHTNode) ToNetworkNode() *NetworkNode {
+	networkNode := new(NetworkNode)
+	networkNode.NodeId = dhtNode.GetNodeId()
+	networkNode.Ip = dhtNode.GetIp()
+	networkNode.Port = dhtNode.GetPort()
+	return networkNode
+}
 
 func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {
 	/* idBytes, _ := hex.DecodeString(dhtNode.nodeId)
