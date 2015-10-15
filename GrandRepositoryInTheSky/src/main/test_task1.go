@@ -91,7 +91,7 @@ func main() {
 	node0b.StartListenServer()
 
 
- 	mess := dht.Msg{Source: node1b, Dest: node0b,Type: "LOOKUPs"}
+ 	mess := dht.Msg{Source: node1b.ToNetworkNode(), Dest: node0b.ToNetworkNode(),Type: "LOOKUP"}
 
 fmt.Println("envio")
 
