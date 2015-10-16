@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
-//	"dht"
+//	"fmt"
+	"dht"
 	"time"
 //	"io/ioutil"
 )
@@ -67,7 +67,85 @@ import (
 //}
 //
 func main() {
-	fmt.Println("hola")
+ 	
+ 	id1 := "01"
+ 	nodo1 := dht.MakeDHTNode(&id1,"localhost","1111")
+ 	nodo1.StartListenServer()
+ 	
+ 	go func() {
+ 		id2 := "02"
+ 		nodo2 := dht.MakeDHTNode(&id2,"localhost","1112")
+ 		nodo2.StartListenServer()
+ 		nodoAConectar := dht.NetworkNode{
+ 			NodeId: "01",
+ 			Ip: "localhost",
+ 			Port: "1111"}
+ 		nodo2.SendAddToRing(&nodoAConectar,nodo2.ToNetworkNode())
+// 		nodo2.SendPrintRing(&nodoAConectar)
+ 	}()
+ 	
+ 	 	go func() {
+ 		id2 := "00"
+ 		nodo2 := dht.MakeDHTNode(&id2,"localhost","1113")
+ 		nodo2.StartListenServer()
+ 		nodoAConectar := dht.NetworkNode{
+ 			NodeId: "01",
+ 			Ip: "localhost",
+ 			Port: "1111"}
+ 		nodo2.SendAddToRing(&nodoAConectar,nodo2.ToNetworkNode())
+// 		nodo2.SendPrintRing(&nodoAConectar)
+ 	}()
+ 	 	
+ 	 	 	go func() {
+ 		id2 := "07"
+ 		nodo2 := dht.MakeDHTNode(&id2,"localhost","1114")
+ 		nodo2.StartListenServer()
+ 		nodoAConectar := dht.NetworkNode{
+ 			NodeId: "01",
+ 			Ip: "localhost",
+ 			Port: "1111"}
+ 		nodo2.SendAddToRing(&nodoAConectar,nodo2.ToNetworkNode())
+// 		nodo2.SendPrintRing(&nodoAConectar)
+ 	}()
+ 	 	 	
+ 	 	 	 	go func() {
+ 		id2 := "04"
+ 		nodo2 := dht.MakeDHTNode(&id2,"localhost","1115")
+ 		nodo2.StartListenServer()
+ 		nodoAConectar := dht.NetworkNode{
+ 			NodeId: "01",
+ 			Ip: "localhost",
+ 			Port: "1111"}
+ 		nodo2.SendAddToRing(&nodoAConectar,nodo2.ToNetworkNode())
+// 		nodo2.SendPrintRing(&nodoAConectar)
+ 	}()
+ 	 	 	 	
+ 	 	 	 	 	go func() {
+ 		id2 := "05"
+ 		nodo2 := dht.MakeDHTNode(&id2,"localhost","1116")
+ 		nodo2.StartListenServer()
+ 		nodoAConectar := dht.NetworkNode{
+ 			NodeId: "01",
+ 			Ip: "localhost",
+ 			Port: "1111"}
+ 		nodo2.SendAddToRing(&nodoAConectar,nodo2.ToNetworkNode())
+// 		nodo2.SendPrintRing(&nodoAConectar)
+ 	}()
+ 	 	 	 	 	
+// 	 	 	 	 	 	go func() {
+// 		id2 := "06"
+// 		nodo2 := dht.MakeDHTNode(&id2,"localhost","1117")
+// 		nodo2.StartListenServer()
+// 		nodoAConectar := dht.NetworkNode{
+// 			NodeId: "01",
+// 			Ip: "localhost",
+// 			Port: "1111"}
+// 		nodo2.SendAddToRing(&nodoAConectar,nodo2.ToNetworkNode())
+//// 		nodo2.SendPrintRing(&nodoAConectar)
+// 	}()
+ 	nodo1.PrintRing()
+ 	time.Sleep(3000 * time.Millisecond)
+ 	nodo1.PrintRing()
  	time.Sleep(30000000000 * time.Millisecond)
 
 }

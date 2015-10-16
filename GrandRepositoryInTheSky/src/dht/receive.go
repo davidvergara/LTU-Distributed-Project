@@ -27,7 +27,6 @@ func (receive *DHTNode) StartListenServer(){
 			
 			buffer :=make([]byte,1024) 
 			readed, err := conn.Read(buffer)
-			fmt.Println("ssdsdsdsdsdsdsdsdsd")
 			if err != nil {
 				
 				panic(err)

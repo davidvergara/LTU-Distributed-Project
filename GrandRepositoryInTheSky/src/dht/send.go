@@ -3,6 +3,8 @@ package dht
 import (
 	"net"
 	"encoding/json"
+//	"fmt"
+	"strconv"
 )
 
 func SetConnection(dest *NetworkNode) *net.UDPConn {
@@ -28,6 +30,7 @@ func Send(dest *NetworkNode, message Msg) {
 		if err !=nil {
 			panic(err)
 		}
+		
 		conn.Write(buffer)
 		
 	}()
@@ -39,12 +42,13 @@ func (dhtNode *DHTNode) SendLookup(key string, dhtMinNode *NetworkNode,
 	if (dhtNode.nodeId == sourceNode.NodeId) {
 		/* We need a channel to save the answer */
 		mutexNumLookup.Lock()
+		numLookupString := strconv.Itoa(NumLookup)
 		mess := Msg{Source: sourceNode,
 			Dest: dhtMinNode,
  			Type: "LOOKUP", 
  			Args: map[string]string{
  					"key": string(key),
- 					"lookUpId": string(NumLookup)}}
+ 					"lookUpId": numLookupString}}
 			
 		answerChannel:= make(chan *NetworkNode)
 		LookupRequest[NumLookup]=answerChannel

@@ -10,26 +10,30 @@ import (
 /* Consts */
 const SPACESIZE = 3
 
-
+/* Contact struct */
 type Contact struct {
 	ip   string
 	port string
 }
 
+/* Node struct */
 type DHTNode struct {
 	nodeId   		string
-	successor  		*NetworkNode
-	predecessor		*NetworkNode
+	Successor  		*NetworkNode
+	Predecessor		*NetworkNode
 	contact			Contact
 	fingers			[]*Finger
-//	communication 	
 }
 
+/* Finger struct */
 type Finger struct {
 	fingerId 		int
 	nodeIdent		*NetworkNode
 }
 
+
+//Creates a DHTNode with the atributes passed as arguments, and initializes
+//some global variables.
 func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode := new(DHTNode)
 	dhtNode.contact.ip = ip
@@ -42,85 +46,12 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 		dhtNode.nodeId = *nodeId
 	}
 
-	dhtNode.successor = nil
-	dhtNode.predecessor = nil
+	dhtNode.Successor = nil
+	dhtNode.Predecessor = nil
 	dhtNode.fingers = make([]*Finger, SPACESIZE)
 	
-	//dhtNode.communication =  
-
+	LookupRequest = make(map[int]chan *NetworkNode)
 	return dhtNode
-}
-
-func (dhtNode *DHTNode) AddToRing(newDHTNode *NetworkNode) {
-	nodeResponsible := dhtNode.Lookup(newDHTNode.NodeId,dhtNode.ToNetworkNode(),"")
-	if nodeResponsible == nil {
-		fmt.Println("Error adding the node "+newDHTNode.NodeId)
-	}
-	dhtNode.SendInsertNodeBeforeMe(nodeResponsible,newDHTNode)
-}
-
-func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
-	mutexPredeccessor.Lock()
-	valueNode,_ :=hex.DecodeString(dhtNode.nodeId)
-	valueNodeNew,_ := hex.DecodeString(newNode.NodeId)
-	if bytes.Compare(valueNode, valueNodeNew)==0 {
-		/* The key is the same, error */
-		fmt.Println("Error, tryed to add a nodeId that is in the ring "+newNode.NodeId)
-		
-	} else {
-		valueNodePredecessor,_ := hex.DecodeString(dhtNode.predecessor.NodeId)
-	
-		if between(valueNodePredecessor, valueNode, valueNodeNew){
-			/* Trying to insert the node in the right place */
-			dhtNode.SendSetSuccessor(newNode, dhtNode.ToNetworkNode())
-			dhtNode.SendSetPredecessor(newNode, dhtNode.predecessor)
-			dhtNode.SendSetSuccessor(dhtNode.predecessor, newNode)
-			dhtNode.SetPredecessor(newNode)
-		} else{
-			/* We have to look for the right place */
-			dhtNode.AddToRing(newNode)
-		}
-	}
-	mutexPredeccessor.Unlock()
-}
-
-func (dhtNode *DHTNode) updateFingerTables(){
-	dhtNode.calcFingerTable()
-	if dhtNode.GetSuccessor() != nil {
-		
-		/* More than one node in the ring */
-		dhtNode.SendUpdateFingerTablesAux(dhtNode.ToNetworkNode(), dhtNode.GetSuccessor())
-	}
-}
-
-func (dhtNode *DHTNode) updateFingerTablesAux(original *NetworkNode){
-	if dhtNode.GetNodeId() != original.NodeId {
-		dhtNode.calcFingerTable()
-		dhtNode.SendUpdateFingerTablesAux(original, dhtNode.GetSuccessor())
-	}
-}
-
-func (dhtNode *DHTNode) calcFingerTable (){
-	for k:=1; k<=SPACESIZE; k++ {
-		n,_ :=hex.DecodeString(dhtNode.nodeId)
-		idFinger,_ :=calcFinger(n, k, SPACESIZE)
-		nodeFinger:= dhtNode.Lookup(idFinger,dhtNode.ToNetworkNode(),"")
-		dhtNode.fingers[k-1] = new(Finger)
-		dhtNode.fingers[k-1].fingerId=k
-		dhtNode.fingers[k-1].nodeIdent=nodeFinger
-	}
-}
-
-func (dhtNode *DHTNode) SetPredecessor(newPredecessor *NetworkNode){
-	mutexPredeccessor.Lock()
-	dhtNode.predecessor=newPredecessor
-	mutexPredeccessor.Unlock()
-}
-
-func (dhtNode *DHTNode) SetSuccessor(newSuccessor *NetworkNode){
-	mutexSuccessor.Lock()
-	dhtNode.successor = newSuccessor
-	mutexSuccessor.Unlock()
 }
 
 /* GETTERS of the node */
@@ -129,11 +60,11 @@ func (dhtNode *DHTNode) GetNodeId () string {
 }
 
 func (dhtNode *DHTNode) GetSuccessor () *NetworkNode {
-	return dhtNode.successor
+	return dhtNode.Successor
 }
 
 func (dhtNode *DHTNode) GetPredecessor () *NetworkNode {
-	return dhtNode.predecessor
+	return dhtNode.Predecessor
 }
 
 func (dhtNode *DHTNode) GetContact () Contact {
@@ -148,10 +79,114 @@ func (dhtNode *DHTNode) GetPort () string {
 	return dhtNode.contact.port
 }
 
+//Local node looks for the place to insert the new node passed as parameter,
+//and tells the node responsible of that place to insert it.
+func (dhtNode *DHTNode) AddToRing(newDHTNode *NetworkNode) {
+	nodeResponsible := dhtNode.Lookup(newDHTNode.NodeId,dhtNode.ToNetworkNode(),"")
+	if nodeResponsible == nil {
+		
+		/* Can't insert */
+		fmt.Println("Error adding the node "+newDHTNode.NodeId)
+	}
+	dhtNode.SendInsertNodeBeforeMe(nodeResponsible,newDHTNode)
+}
+
+//Local node inserts the new node before it if that place is still valid. If not,
+//calls AddToRing again to reallocate the node.
+func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
+	mutexPredeccessor.Lock()
+	valueNode,_ :=hex.DecodeString(dhtNode.nodeId)
+	valueNodeNew,_ := hex.DecodeString(newNode.NodeId)
+	if bytes.Compare(valueNode, valueNodeNew)==0 {
+		
+		/* Can't be 2 nodes with same ID */
+		fmt.Println("Error, tried to add a nodeId that is already in the ring: "+newNode.NodeId)
+		
+	} else {
+		if(dhtNode.Predecessor == nil){
+			
+			/* First node in the ring */
+			dhtNode.SendSetSuccessor(newNode, dhtNode.ToNetworkNode())
+			dhtNode.SendSetPredecessor(newNode, dhtNode.ToNetworkNode())
+			dhtNode.Predecessor = newNode
+			dhtNode.Successor = newNode
+			fmt.Println("Insertado aqui el nodo " + newNode.NodeId)
+			dhtNode.updateFingerTables()
+		} else{
+			
+			valueNodePredecessor,_ := hex.DecodeString(dhtNode.Predecessor.NodeId)
+			if bytes.Compare(valueNodePredecessor, valueNodeNew) == 0{
+				
+				/* Can't be 2 nodes with same ID */
+				fmt.Println("Error, tried to add a nodeId that is already in the ring: "+newNode.NodeId)
+			} else if between(valueNodePredecessor, valueNode, valueNodeNew){
+				
+				/* Trying to insert the node in the right place */
+				dhtNode.SendSetSuccessor(newNode, dhtNode.ToNetworkNode())
+				dhtNode.SendSetPredecessor(newNode, dhtNode.Predecessor)
+				dhtNode.SendSetSuccessor(dhtNode.Predecessor, newNode)
+				dhtNode.Predecessor = newNode
+				dhtNode.updateFingerTables()
+			} else{
+				
+				/* This is not the right place anymore -> we have to find it out again */
+				dhtNode.AddToRing(newNode)
+			}
+		}
+	}
+	mutexPredeccessor.Unlock()
+}
+
+//Update the finger table of all the nodes in the ring
+func (dhtNode *DHTNode) updateFingerTables(){
+	dhtNode.calcFingerTable()
+	if dhtNode.GetSuccessor() != nil {
+		
+		/* More than one node in the ring */
+		dhtNode.SendUpdateFingerTablesAux(dhtNode.ToNetworkNode(), dhtNode.GetSuccessor())
+	}
+}
+
+//Continues updating the finger table of all the nodes in the ring
+func (dhtNode *DHTNode) updateFingerTablesAux(original *NetworkNode){
+	if dhtNode.GetNodeId() != original.NodeId {
+		
+		/* Not reached the beginning of the ring */
+		dhtNode.calcFingerTable()
+		dhtNode.SendUpdateFingerTablesAux(original, dhtNode.GetSuccessor())
+	}
+}
+
+//Update the finger table of the Local node
+func (dhtNode *DHTNode) calcFingerTable (){
+	for k:=1; k<=SPACESIZE; k++ {
+		n,_ :=hex.DecodeString(dhtNode.nodeId)
+		idFinger,_ :=calcFinger(n, k, SPACESIZE)
+		nodeFinger:= dhtNode.Lookup(idFinger,dhtNode.ToNetworkNode(),"")
+		dhtNode.fingers[k-1] = new(Finger)
+		dhtNode.fingers[k-1].fingerId=k
+		dhtNode.fingers[k-1].nodeIdent=nodeFinger
+	}
+}
+
+//Puts newPredecessor as the predecessor of the local node
+func (dhtNode *DHTNode) SetPredecessor(newPredecessor *NetworkNode){
+	mutexPredeccessor.Lock()
+	dhtNode.Predecessor=newPredecessor
+	mutexPredeccessor.Unlock()
+}
+
+//Puts newSucessor as the successor of the local node
+func (dhtNode *DHTNode) SetSuccessor(newSuccessor *NetworkNode){
+//	fmt.Println("Nodo " + dhtNode.nodeId + " poniendo sucesor " + newSuccessor.NodeId)
+	mutexSuccessor.Lock()
+	dhtNode.Successor = newSuccessor
+	mutexSuccessor.Unlock()
+}
 
 func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup string) *NetworkNode {
 	
-	if dhtNode.nodeId == key || dhtNode.successor == nil {
+	if dhtNode.nodeId == key || dhtNode.Successor == nil {
 		
 		if (dhtNode.nodeId == sourceNode.NodeId){
 			/* key == nodeID, I answer my query*/
@@ -164,24 +199,24 @@ func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup str
 		
 		keyBytes,_ := hex.DecodeString(key)
 		nodeIDBytes,_ := hex.DecodeString(dhtNode.nodeId)
-		sucessorIDBytes,_ := hex.DecodeString(dhtNode.successor.NodeId)
+		sucessorIDBytes,_ := hex.DecodeString(dhtNode.Successor.NodeId)
 		
 		if between(nodeIDBytes, sucessorIDBytes, keyBytes){
 
 			/* key between nodeID and its successor */
 			if (dhtNode.nodeId == sourceNode.NodeId){
 				/* key == nodeID, I answer my query*/
-				return dhtNode.successor
+				return dhtNode.Successor
 			} else{
-				dhtNode.SendLookupAnswer(dhtNode.successor , sourceNode, idLookup)
+				dhtNode.SendLookupAnswer(dhtNode.Successor , sourceNode, idLookup)
 				return nil
 			}
 		} else{
 			/* key not between nodeID and its successor */
 			
+			
 			/* return the closest finger to the key */
 			dhtMinNode:= dhtNode.calcNodeMinDist(key)
-			
 			channel := dhtNode.SendLookup(key, dhtMinNode, sourceNode, idLookup)
 			
 			/* Waiting the answer */
@@ -203,7 +238,7 @@ func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup str
  * Return the closest finger of dhtNode to the key
  */
 func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
-	dhtNodeMin := dhtNode.successor
+	dhtNodeMin := dhtNode.Successor
 	/* Key to HEX */
 	keyBytes,_ := hex.DecodeString(key)
 	/* dhtNodeMin to HEX */
@@ -234,6 +269,7 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 
 func (dhtNode *DHTNode) PrintRing(){
 	fmt.Println("Node " + dhtNode.GetNodeId())
+	dhtNode.PrintFingerTable()
 	if dhtNode.GetSuccessor() != nil {
 		
 		/* More than one node in the ring */
@@ -244,6 +280,8 @@ func (dhtNode *DHTNode) PrintRing(){
 func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode){
 	if dhtNode.GetNodeId() != original.NodeId {
 		fmt.Println("Node " + dhtNode.GetNodeId())
+		dhtNode.PrintFingerTable()
+
 		/* Not printed all the ring */
 		dhtNode.SendPrintRingAux(original, dhtNode.GetSuccessor())
 	}
@@ -310,6 +348,17 @@ func (dhtNode *DHTNode) ToNetworkNode() *NetworkNode {
 	networkNode.Ip = dhtNode.GetIp()
 	networkNode.Port = dhtNode.GetPort()
 	return networkNode
+}
+
+func (dhtNode *DHTNode) PrintFingerTable() {
+	for i,v := range dhtNode.fingers {
+		if v != nil {
+			fmt.Printf("   -Finger %d -> %s\n",v.fingerId,v.nodeIdent.NodeId)
+		} else{
+			fmt.Printf("   -Finger %d -> null\n",i+1)
+		}
+		
+	}
 }
 
 func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {
