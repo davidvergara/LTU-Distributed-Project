@@ -187,9 +187,9 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 	
 		if between(valueNodePredecessor, valueNode, valueNodeNew){
 			/* Trying to insert the node in the right place */
-			//SendSetSuccessor (newNode, shtNode.tonetwork)
-			//SendSetPredeccessor (newNode, dhtNode.predecessor)
-			//SendSetSuccessor (dhtNode.predecessor, newNode)
+			dhtNode.SendSetSuccessor(newNode, dhtNode.ToNetworkNode())
+			dhtNode.SendSetPredecessor(newNode, dhtNode.predecessor)
+			dhtNode.SendSetSuccessor(dhtNode.predecessor, newNode)
 			dhtNode.SetPredecessor(newNode)
 		} else{
 			/* We have to look for the right place */
