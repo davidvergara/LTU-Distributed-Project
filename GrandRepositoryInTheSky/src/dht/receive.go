@@ -72,11 +72,11 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		}
 		case message.Type == "SETPREDECESSOR":
 		{
-			//Llamar funcion SETPREDECESSOR
+			receive.receiveSetPredecessor(message)
 		}
 		case message.Type == "SETSUCCESSOR":
 		{
-			//Llamar funcion SETSUCCESSOR
+			receive.receiveSetSuccessor(message)
 		}
 		case message.Type == "PRINTRING":
 		{
@@ -96,5 +96,15 @@ func (receive *DHTNode) receiveLookup (message Msg){
 func (receive *DHTNode) receiveLookupAnswer (message Msg){
 	idLookup,_ := strconv.Atoi(message.Args["lookUpId"])
 	LookupRequest[idLookup] <- message.Source
+}
+
+func (receive *DHTNode) receiveSetPredecessor (message Msg){
+	newPredecessor := message.Source
+	receive.SetPredecessor(newPredecessor)
+}
+
+func (receive *DHTNode) receiveSetSuccessor (message Msg){
+	newSuccessor := message.Source
+	receive.SetSuccessor(newSuccessor)
 }
 

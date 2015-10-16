@@ -169,7 +169,9 @@ func (dhtNode *DHTNode) SetPredecessor(newPredecessor *NetworkNode){
 }
 
 func (dhtNode *DHTNode) SetSuccessor(newSuccessor *NetworkNode){
-	
+	mutexSuccessor.Lock()
+	dhtNode.successor = newSuccessor
+	mutexSuccessor.Unlock()
 }
 
 func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {

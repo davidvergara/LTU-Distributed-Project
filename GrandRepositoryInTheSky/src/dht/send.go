@@ -78,4 +78,22 @@ func (dhtNode *DHTNode) SendLookupAnswer(answerNode *NetworkNode, sourceNode *Ne
 	 				"lookUpId":idLookup}}
 		
 	Send(sourceNode, mess)
-}	 
+}	
+
+func (dhtNode *DHTNode) SendSetPredecessor(dest *NetworkNode, newPredecessor *NetworkNode){
+	mess := Msg{Source: newPredecessor,
+				Dest: dest,
+				Type: "SETPREDECESSOR",
+				Args: nil}
+	
+	Send(dest,mess)
+}
+
+func (dhtNode *DHTNode) SendSetSuccessor(dest *NetworkNode, newSuccessor *NetworkNode){
+	mess := Msg{Source: newSuccessor,
+			Dest: dest,
+			Type: "SETSUCCESSOR",
+			Args: nil}
+	
+	Send(dest, mess)
+}
