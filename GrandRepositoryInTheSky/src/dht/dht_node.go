@@ -1,7 +1,7 @@
 package dht
 
 import (
-//	"fmt"
+	"fmt"
 	"bytes"
 //	"math/big"
 	"encoding/hex"
@@ -162,14 +162,39 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 //	fmt.Println("========================")
 //}
 
-func (dhtNode *DHTNode) UpdatePredecessor(newPredecessor *NetworkNode){
-	
+func (dhtNode *DHTNode) SetPredecessor(newPredecessor *NetworkNode){
+	mutexPredeccessor.Lock()
 	dhtNode.predecessor=newPredecessor
+	mutexPredeccessor.Unlock()
+}
+
+func (dhtNode *DHTNode) SetSuccessor(newSuccessor *NetworkNode){
 	
 }
 
-func (dhtNode *DHTNode) UpdateSuccessor(newSuccessor *NetworkNode){
+func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
+	mutexPredeccessor.Lock()
+	valueNode,_ :=hex.DecodeString(dhtNode.nodeId)
+	valueNodeNew,_ := hex.DecodeString(newNode.NodeId)
+	if bytes.Compare(valueNode, valueNodeNew)==0 {
+		/* The key is the same, error */
+		fmt.Println("Error, tryed to add a nodeId that is in the ring "+newNode.NodeId)
+		
+	} else {
+		valueNodePredecessor,_ := hex.DecodeString(dhtNode.predecessor.NodeId)
 	
+		if between(valueNodePredecessor, valueNode, valueNodeNew){
+			/* Trying to insert the node in the right place */
+			//SendSetSuccessor (newNode, shtNode.tonetwork)
+			//SendSetPredeccessor (newNode, dhtNode.predecessor)
+			//SendSetSuccessor (dhtNode.predecessor, newNode)
+			dhtNode.SetPredecessor(newNode)
+		} else{
+			/* We have to look for the right place */
+			dhtNode.AddToRing(newNode)
+		}
+	}
+	mutexPredeccessor.Unlock()
 }
 
 /* GETTERS of the node */
