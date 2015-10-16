@@ -57,13 +57,9 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		{
 			receive.receiveLookupAnswer(message)
 		}
-		case message.Type == "UPDATEFINGERS":
+		case message.Type == "ADDTORING":
 		{
-			//Llamar funcion UPDATEFINGERS
-		}
-		case message.Type == "ADDRING":
-		{
-			//Llamar funcion ADDRING
+			receive.receiveAddToRing(message)
 		}
 		case message.Type == "SETPREDECESSOR":
 		{
@@ -126,6 +122,11 @@ func (receive *DHTNode) receivePrintRing(message Msg){
 func (receive *DHTNode) receivePrintRingAux(message Msg){
 	origin := message.Source
 	receive.PrintRingAux(origin)
+}
+
+func (receive *DHTNode) receiveAddToRing(message Msg){
+	newNode := message.Source
+	receive.AddToRing(newNode)
 }
 
 func (receive *DHTNode) receiveUpdateFingerTables(message Msg){

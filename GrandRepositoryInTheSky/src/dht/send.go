@@ -112,6 +112,15 @@ func (dhtNode *DHTNode) SendPrintRingAux(original *NetworkNode, dest *NetworkNod
 	Send(dest,mess)
 }
 
+func (dhtNode *DHTNode) SendAddToRing(dest *NetworkNode, newNode *NetworkNode){
+	mess := Msg{Source: newNode,
+				Dest: dest,
+				Type: "ADDTORING",
+				Args: nil}
+	
+	Send(dest,mess)
+}
+
 func (dhtNode *DHTNode) SendUpdateFingerTables(dest *NetworkNode){
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
 				Dest: dest,
@@ -129,7 +138,6 @@ func (dhtNode *DHTNode) SendUpdateFingerTablesAux(original *NetworkNode, dest *N
 	
 	Send(dest,mess)
 }
-
 
 func (dhtNode *DHTNode) SendInsertNodeBeforeMe (nodeResponsible *NetworkNode,nodeToInsert *NetworkNode){
 	mess := Msg{Source: nodeToInsert,
