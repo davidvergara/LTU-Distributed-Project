@@ -10,6 +10,8 @@ var LocalPort 		string
 var NumLookup = 0
 var LookupRequest 	map[int]chan *NetworkNode
 var mutexNumLookup = &sync.Mutex{}
+var mutexPredeccessor = &sync.Mutex{}
+var mutexSuccessor = &sync.Mutex{} 
 
 type NetworkNode struct {
 	NodeId string

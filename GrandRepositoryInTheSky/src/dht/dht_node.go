@@ -163,7 +163,9 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 //}
 
 func (dhtNode *DHTNode) UpdatePredecessor(newPredecessor *NetworkNode){
+	
 	dhtNode.predecessor=newPredecessor
+	
 }
 
 func (dhtNode *DHTNode) UpdateSuccessor(newSuccessor *NetworkNode){
