@@ -162,14 +162,14 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 //	fmt.Println("========================")
 //}
 
-func (dhtNode *DHTNode) UpdatePredecessor(newPredecessor *NetworkNode){
-	
-	dhtNode.predecessor=newPredecessor
+func (dhtNode *DHTNode) SetPredecessor(newPredecessor *NetworkNode){
 	
 }
 
-func (dhtNode *DHTNode) UpdateSuccessor(newSuccessor *NetworkNode){
-	
+func (dhtNode *DHTNode) SetSuccessor(newSuccessor *NetworkNode){
+	mutexSuccessor.Lock()
+	dhtNode.successor = newSuccessor
+	mutexSuccessor.Unlock()
 }
 
 /* GETTERS of the node */
@@ -278,6 +278,10 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 		}
 	}
 	return dhtNodeMin
+	
+}
+
+func (dhtNode *DHTNode) PrintRing(first *NetworkNode){
 	
 }
 
