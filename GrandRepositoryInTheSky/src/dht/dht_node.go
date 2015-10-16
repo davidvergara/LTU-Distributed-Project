@@ -305,8 +305,41 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 		}
 	}
 	return dhtNodeMin
-	
 }
+
+
+func (dhtNode *DHTNode) PrintRing(){
+	fmt.Println("Node " + dhtNode.GetNodeId())
+	if dhtNode.GetSuccessor() != nil {
+		
+		/* More than one node in the ring */
+		dhtNode.SendPrintRingAux(dhtNode.ToNetworkNode(), dhtNode.GetSuccessor())
+	}
+}
+
+func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode){
+	if dhtNode.GetNodeId() != original.NodeId {
+		fmt.Println("Node " + dhtNode.GetNodeId())
+		/* Not printed all the ring */
+		dhtNode.SendPrintRingAux(original, dhtNode.GetSuccessor())
+	}
+}
+//func (dhtNode *DHTNode) PrintRing (original *NetworkNode, first bool){
+//	if first {
+//		
+//		/* First node receiving the printring command */
+//		fmt.Println("Node " + dhtNode.GetNodeId())
+//		if dhtNode.GetSuccessor() != nil {
+//			//send
+//		}
+//	} else{
+//		if dhtNode.nodeId != original.NodeId {
+//			fmt.Println("Node " + dhtNode.GetNodeId())
+//			//send
+//		}
+//	}
+//	
+//}
 
 ///* Return the responsible node for the key */
 //func (dhtNode *DHTNode) responsible(key string) bool {

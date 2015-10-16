@@ -80,7 +80,11 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		}
 		case message.Type == "PRINTRING":
 		{
-			//Llamar funcion PRINTRING
+			receive.receivePrintRing(message)
+		}
+		case message.Type == "PRINTRINGAUX":
+		{
+			receive.receivePrintRingAux(message)
 		}
 		default: 
 		{
@@ -106,5 +110,14 @@ func (receive *DHTNode) receiveSetPredecessor (message Msg){
 func (receive *DHTNode) receiveSetSuccessor (message Msg){
 	newSuccessor := message.Source
 	receive.SetSuccessor(newSuccessor)
+}
+
+func (receive *DHTNode) receivePrintRing(message Msg){
+	receive.PrintRing()
+}
+
+func (receive *DHTNode) receivePrintRingAux(message Msg){
+	origin := message.Source
+	receive.PrintRingAux(origin)
 }
 

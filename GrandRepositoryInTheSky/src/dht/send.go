@@ -97,3 +97,21 @@ func (dhtNode *DHTNode) SendSetSuccessor(dest *NetworkNode, newSuccessor *Networ
 	
 	Send(dest, mess)
 }
+
+func (dhtNode *DHTNode) SendPrintRing(dest *NetworkNode){
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+				Dest: dest,
+				Type: "PRINTRING",
+				Args: nil}
+	
+	Send(dest,mess)
+}
+
+func (dhtNode *DHTNode) SendPrintRingAux(original *NetworkNode, dest *NetworkNode){
+	mess := Msg{Source: original,
+				Dest: dest,
+				Type: "PRINTRINGAUX",
+				Args: nil}
+	
+	Send(dest,mess)
+}
