@@ -95,7 +95,7 @@ func main() {
 
 fmt.Println("envio")
 
-	dht.Send(node0b, mess)
+	dht.Send(node0b.ToNetworkNode(), mess)
 	
 fmt.Println("envio")
  time.Sleep(30000000000 * time.Millisecond)

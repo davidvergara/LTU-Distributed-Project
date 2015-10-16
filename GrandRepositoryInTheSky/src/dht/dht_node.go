@@ -2,9 +2,9 @@ package dht
 
 import (
 //	"fmt"
-//	"bytes"
+	"bytes"
 //	"math/big"
-//	"encoding/hex"
+	"encoding/hex"
 )
 
 /* Consts */
@@ -52,7 +52,7 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 }
 
 //func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
-//	
+//
 //	/* Just one node in the ring ->
 //	   newNode is successor and predecessor of that node */
 //	if dhtNode.successor == nil {
@@ -162,40 +162,28 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 //	fmt.Println("========================")
 //}
 
-//func (dhtNode *DHTNode) Lookup(key string) *DHTNode {
-//	
-//	if dhtNode.nodeId == key || dhtNode.successor == nil {
-//		/* key == nodeID */
-//		return dhtNode
-//	} else {
-//		
-//		keyBytes,_ := hex.DecodeString(key)
-//		nodeIDBytes,_ := hex.DecodeString(dhtNode.nodeId)
-//		sucessorIDBytes,_ := hex.DecodeString(dhtNode.successor.nodeId)
-//		
-//		if between(nodeIDBytes, sucessorIDBytes, keyBytes){
-//		
-//			/* key between nodeID and its successor */
-//			return dhtNode.successor
-//		} else{
-//			/* key not between nodeID and its successor */
-//			return dhtNode.successor.Lookup(key)
-//		}
-//	}
-//}
+func (dhtNode *DHTNode) UpdatePredecessor(newPredecessor *NetworkNode){
+	
+	dhtNode.predecessor=newPredecessor
+	
+}
+
+func (dhtNode *DHTNode) UpdateSuccessor(newSuccessor *NetworkNode){
+	
+}
 
 /* GETTERS of the node */
 func (dhtNode *DHTNode) GetNodeId () string {
 	return dhtNode.nodeId
 }
 
-//func (dhtNode *DHTNode) GetSuccessor () *DHTNode {
-//	return dhtNode.successor
-//}
+func (dhtNode *DHTNode) GetSuccessor () *NetworkNode {
+	return dhtNode.successor
+}
 
-//func (dhtNode *DHTNode) GetPredecessor () *DHTNode {
-//	return dhtNode.predecessor
-//}
+func (dhtNode *DHTNode) GetPredecessor () *NetworkNode {
+	return dhtNode.predecessor
+}
 
 func (dhtNode *DHTNode) GetContact () Contact {
 	return dhtNode.contact
@@ -210,72 +198,88 @@ func (dhtNode *DHTNode) GetPort () string {
 }
 
 
-//func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
-//	// TODO
-////	fmt.Println("Llave "+key)
-//	
-//	if dhtNode.nodeId == key || dhtNode.successor == nil {
-////		fmt.Println("Entra en el if")
-//		/* key == nodeID */
-//		return dhtNode
-//		
-//	} else{
-//		
-//		keyBytes,_ := hex.DecodeString(key)
-//		nodeIDBytes,_ := hex.DecodeString(dhtNode.nodeId)
-//		sucessorIDBytes,_ := hex.DecodeString(dhtNode.successor.nodeId)
-//		
-//		if between(nodeIDBytes, sucessorIDBytes, keyBytes){
-//			
-////			fmt.Println("Entra en el else if")
-//			/* key between nodeID and its successor */
-//			return dhtNode.successor
-//		} else{
-////			fmt.Println("Entra en el else")
-//			/* key not between nodeID and its successor */
-//			
-//			/* return the closest finger to the key */
-//			dhtMinNode:= dhtNode.calcNodeMinDist(key)
-//			
-////			fmt.Println(dhtMinNode.nodeId)
-//			return dhtMinNode.acceleratedLookupUsingFingers(key)
-//		}
-//	}
-//	
-//}
+func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup string) *NetworkNode {
+	
+	if dhtNode.nodeId == key || dhtNode.successor == nil {
+		
+		if (dhtNode.nodeId == sourceNode.NodeId){
+			/* key == nodeID, I answer my query*/
+			return dhtNode.ToNetworkNode()
+		} else{
+			dhtNode.SendLookupAnswer(dhtNode.ToNetworkNode() , sourceNode, idLookup)
+			return nil
+		}
+	} else{
+		
+		keyBytes,_ := hex.DecodeString(key)
+		nodeIDBytes,_ := hex.DecodeString(dhtNode.nodeId)
+		sucessorIDBytes,_ := hex.DecodeString(dhtNode.successor.NodeId)
+		
+		if between(nodeIDBytes, sucessorIDBytes, keyBytes){
+
+			/* key between nodeID and its successor */
+			if (dhtNode.nodeId == sourceNode.NodeId){
+				/* key == nodeID, I answer my query*/
+				return dhtNode.successor
+			} else{
+				dhtNode.SendLookupAnswer(dhtNode.successor , sourceNode, idLookup)
+				return nil
+			}
+		} else{
+			/* key not between nodeID and its successor */
+			
+			/* return the closest finger to the key */
+			dhtMinNode:= dhtNode.calcNodeMinDist(key)
+			
+			channel := dhtNode.SendLookup(key, dhtMinNode, sourceNode, idLookup)
+			
+			/* Waiting the answer */
+			if (dhtNode.nodeId == sourceNode.NodeId) {
+				select {
+					case answer := <- channel:
+						return answer
+				}
+				return nil
+			} else {
+				/* The node that called the function is just and intermediary */
+				return nil
+			}
+		}
+	}
+}
 
 /**
  * Return the closest finger of dhtNode to the key
  */
-//func (dhtNode *DHTNode) calcNodeMinDist(key string) *DHTNode {
-//	dhtNodeMin := dhtNode.successor
-//	/* Key to HEX */
-//	keyBytes,_ := hex.DecodeString(key)
-//	/* dhtNodeMin to HEX */
-//	nodeIdBytes,_ := hex.DecodeString(dhtNodeMin.nodeId)
-//	minDist := distance(nodeIdBytes, keyBytes,SPACESIZE)
-//	for i,v := range dhtNode.fingers {
-//		
-//		if v!= nil {
-//			fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.nodeId)
-//			
-//			if bytes.Compare(fingerBytes,nodeIdBytes) != 0 {
-//				if between(fingerBytes, nodeIdBytes,keyBytes){
-//					/* FingerID to HEX */
-//					distance:= distance(fingerBytes, keyBytes,SPACESIZE)
-//					if minDist.Cmp(distance) == 1{
-//						minDist=distance
-//						dhtNodeMin = dhtNode.fingers[i].nodeIdent
-//						//fmt.Println("Nodo " + dhtNode.nodeId + " Distancia minima -> " + dhtNodeMin.nodeId + " key " + key)
-//					}
-//				}
-//			}
-//			
-//		}
-//	}
-//	return dhtNodeMin
-//	
-//}
+func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
+	dhtNodeMin := dhtNode.successor
+	/* Key to HEX */
+	keyBytes,_ := hex.DecodeString(key)
+	/* dhtNodeMin to HEX */
+	nodeIdBytes,_ := hex.DecodeString(dhtNodeMin.NodeId)
+	minDist := distance(nodeIdBytes, keyBytes,SPACESIZE)
+	for i,v := range dhtNode.fingers {
+		
+		if v!= nil {
+			fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.NodeId)
+			
+			if bytes.Compare(fingerBytes,nodeIdBytes) != 0 {
+				if between(fingerBytes, nodeIdBytes,keyBytes){
+					/* FingerID to HEX */
+					distance:= distance(fingerBytes, keyBytes,SPACESIZE)
+					if minDist.Cmp(distance) == 1{
+						minDist=distance
+						dhtNodeMin = dhtNode.fingers[i].nodeIdent
+						//fmt.Println("Nodo " + dhtNode.nodeId + " Distancia minima -> " + dhtNodeMin.nodeId + " key " + key)
+					}
+				}
+			}
+			
+		}
+	}
+	return dhtNodeMin
+	
+}
 
 ///* Return the responsible node for the key */
 //func (dhtNode *DHTNode) responsible(key string) bool {

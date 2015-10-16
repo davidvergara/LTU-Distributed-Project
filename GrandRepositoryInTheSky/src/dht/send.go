@@ -3,16 +3,14 @@ package dht
 import (
 	"net"
 	"encoding/json"
-	  "io/ioutil"
-	  "fmt"
 )
 
 //type NodeSender struct{
 //	dhtNode					*dht.DHTNode
 //}
 
-func SetConnection(dest *DHTNode) *net.UDPConn {
-	addr, err := net.ResolveUDPAddr("udp", dest.GetIp()+":"+dest.GetPort())
+func SetConnection(dest *NetworkNode) *net.UDPConn {
+	addr, err := net.ResolveUDPAddr("udp", dest.Ip+":"+dest.Port)
 	if err != nil {
 		panic(err)
 	}
@@ -25,14 +23,10 @@ func SetConnection(dest *DHTNode) *net.UDPConn {
 }
 
 
-func Send(dest *DHTNode, message Msg) {
+func Send(dest *NetworkNode, message Msg) {
 	conn := SetConnection(dest)
 
-	
 	go func() {
-			d1 := []byte("hello\ngo\n")
-    es := ioutil.WriteFile("/Temp/sddsd", d1, 0644)
-     fmt.Println(es)
 		buffer, err := json.Marshal(message)
 		
 		if err !=nil {
@@ -41,5 +35,47 @@ func Send(dest *DHTNode, message Msg) {
 		conn.Write(buffer)
 		
 	}()
-
 }
+
+func (dhtNode *DHTNode) SendLookup(key string, dhtMinNode *NetworkNode,
+	 sourceNode *NetworkNode, idLookup string)chan *NetworkNode{
+
+	if (dhtNode.nodeId == sourceNode.NodeId) {
+		/* We need a channel to save the answer */
+		mutexNumLookup.Lock()
+		mess := Msg{Source: sourceNode,
+			Dest: dhtMinNode,
+ 			Type: "LOOKUP", 
+ 			Args: map[string]string{
+ 					"key": string(key),
+ 					"lookUpId": string(NumLookup)}}
+			
+		answerChannel:= make(chan *NetworkNode)
+		LookupRequest[NumLookup]=answerChannel
+		NumLookup++
+		mutexNumLookup.Unlock()
+		Send(dhtMinNode, mess)
+		return answerChannel
+	} else {
+		/* The node is just an intermediary */
+		mess := Msg{Source: sourceNode,
+			Dest: dhtMinNode,
+ 			Type: "LOOKUP", 
+ 			Args: map[string]string{
+ 					"key": string(key),
+ 					"lookUpId": idLookup}}
+		Send(dhtMinNode, mess)
+		return nil
+	}
+}
+
+func (dhtNode *DHTNode) SendLookupAnswer(answerNode *NetworkNode, sourceNode *NetworkNode, idLookup string){
+
+	mess := Msg{Source: answerNode,
+			Dest: sourceNode,
+	 		Type: "LOOKUPANSWER", 
+	 		Args: map[string]string{
+	 				"lookUpId":idLookup}}
+		
+	Send(sourceNode, mess)
+}	 
