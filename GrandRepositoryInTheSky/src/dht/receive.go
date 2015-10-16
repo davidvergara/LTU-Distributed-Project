@@ -9,11 +9,6 @@ import (
 	"strconv"
 )
 
-//type nodeReceiver struct{
-//	dhtNode				*dht.DHTNode
-//	sendDataObject		*sendData.NodeSender
-//}
-
 func (receive *DHTNode) StartListenServer(){
 	
 	addr, err := net.ResolveUDPAddr("udp",(":"+receive.GetPort()))
@@ -86,6 +81,18 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		{
 			receive.receivePrintRingAux(message)
 		}
+		case message.Type == "UPDATEFINGERTABLES":
+		{
+			receive.receiveUpdateFingerTables(message)
+		}
+		case message.Type == "UPDATEFINGERTABLESAUX":
+		{
+			receive.receiveUpdateFingerTablesAux(message)
+		}
+		case message.Type == "INSERTNODEBEFOREME":
+		{
+			receive.receiveInsertNodeBeforeMe(message)
+		}
 		default: 
 		{
 			fmt.Println("Wrong message")
@@ -121,3 +128,16 @@ func (receive *DHTNode) receivePrintRingAux(message Msg){
 	receive.PrintRingAux(origin)
 }
 
+func (receive *DHTNode) receiveUpdateFingerTables(message Msg){
+	receive.updateFingerTables()
+}
+
+func (receive *DHTNode) receiveUpdateFingerTablesAux(message Msg){
+	origin := message.Source
+	receive.updateFingerTablesAux(origin)
+}
+
+func (receive *DHTNode) receiveInsertNodeBeforeMe(message Msg){
+	nodeToInsert := message.Source
+	receive.InsertNodeBeforeMe(nodeToInsert)
+}

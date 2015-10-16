@@ -5,10 +5,6 @@ import (
 	"encoding/json"
 )
 
-//type NodeSender struct{
-//	dhtNode					*dht.DHTNode
-//}
-
 func SetConnection(dest *NetworkNode) *net.UDPConn {
 	addr, err := net.ResolveUDPAddr("udp", dest.Ip+":"+dest.Port)
 	if err != nil {
@@ -114,4 +110,31 @@ func (dhtNode *DHTNode) SendPrintRingAux(original *NetworkNode, dest *NetworkNod
 				Args: nil}
 	
 	Send(dest,mess)
+}
+
+func (dhtNode *DHTNode) SendUpdateFingerTables(dest *NetworkNode){
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+				Dest: dest,
+				Type: "UPDATEFINGERTABLES",
+				Args: nil}
+	
+	Send(dest,mess)
+}
+
+func (dhtNode *DHTNode) SendUpdateFingerTablesAux(original *NetworkNode, dest *NetworkNode){
+	mess := Msg{Source: original,
+				Dest: dest,
+				Type: "UPDATEFINGERTABLESAUX",
+				Args: nil}
+	
+	Send(dest,mess)
+}
+
+
+func (dhtNode *DHTNode) SendInsertNodeBeforeMe (nodeResponsible *NetworkNode,nodeToInsert *NetworkNode){
+	mess := Msg{Source: nodeToInsert,
+				Dest: nodeResponsible,
+				Type: "INSERTNODEBEFOREME",
+				Args: nil}
+	Send(nodeResponsible,mess)
 }

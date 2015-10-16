@@ -3,7 +3,7 @@ package dht
 import (
 	"fmt"
 	"bytes"
-//	"math/big"
+	"math/big"
 	"encoding/hex"
 )
 
@@ -51,127 +51,12 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	return dhtNode
 }
 
-//func (dhtNode *DHTNode) AddToRing(newDHTNode *DHTNode) {
-//
-//	/* Just one node in the ring ->
-//	   newNode is successor and predecessor of that node */
-//	if dhtNode.successor == nil {
-//		if(dhtNode.nodeId == newDHTNode.nodeId){
-//			fmt.Println("Error nodos iguales")
-//		}else{
-//			dhtNode.successor = newDHTNode
-//			dhtNode.predecessor = newDHTNode
-//			newDHTNode.successor = dhtNode
-//			newDHTNode.predecessor = dhtNode
-//			newDHTNode.updateFingerTables()
-//		}
-////		fmt.Println("Solo un nodo -> actualizando finger table")
-//	} else {
-//		
-//		/* More than one node */
-//		valueNode,_ :=hex.DecodeString(dhtNode.nodeId)
-//		valueNodeNew,_ := hex.DecodeString(newDHTNode.nodeId)
-//		valueNodeNext,_ := hex.DecodeString(dhtNode.successor.nodeId)
-//		
-//		if bytes.Compare(valueNode,valueNodeNew) == 0 ||
-//			bytes.Compare(valueNodeNew,valueNodeNext) == 0 {
-//				fmt.Println("Error iguales")
-//		}else{
-//			/* Look if dhtNode is last node in the ring */
-//			if bytes.Compare(valueNode, valueNodeNext) == 1 {
-//				
-//				/* New node between last and first nodes */
-//				if bytes.Compare(valueNodeNew,valueNode) == 1 ||
-//					 bytes.Compare(valueNodeNew,valueNodeNext) == -1 {
-//					
-//					/* valueNodeNew > valueNode || valueNodeNew < valueNodeNext */
-//					oldSuccessorDhtNode := dhtNode.successor
-//					dhtNode.successor = newDHTNode
-//					newDHTNode.successor = oldSuccessorDhtNode
-//					newDHTNode.predecessor = dhtNode
-//					oldSuccessorDhtNode.predecessor = newDHTNode
-//					newDHTNode.updateFingerTables()
-//				} else {
-//					
-//					/* New node is not after last node ->
-//				       recursion with first node */
-//					dhtNode.successor.AddToRing(newDHTNode)
-//				}
-//			} else {
-//				
-//				/* Trying to insert between 2 consecutive nodes */
-//				if bytes.Compare(valueNodeNew,valueNode) == 1 && 
-//					bytes.Compare(valueNodeNew,valueNodeNext) == -1{
-//					/* valueNodeNew > valueNode && valueNodeNew < valueNodeNext */
-//					
-//					/* New node id bigger than dhtNode id and smaller than next node id ->
-//				       inserction between those nodes */
-//						oldSuccessorDhtNode := dhtNode.successor
-//						dhtNode.successor = newDHTNode
-//						newDHTNode.successor = oldSuccessorDhtNode
-//						newDHTNode.predecessor = dhtNode
-//						oldSuccessorDhtNode.predecessor = newDHTNode
-//						newDHTNode.updateFingerTables()
-//				} else {
-//					
-//					/* New node is not between those nodes ->
-//				       recursion with next node */
-//					dhtNode.successor.AddToRing(newDHTNode)
-//				}	
-//			}
-//		}
-//	}
-//}
-
-//func (dhtNode *DHTNode) updateFingerTables() {
-////	fmt.Println("Calculating Finger table for " + dhtNode.nodeId)
-//	dhtNode.calcFingerTable()
-//	
-//	/* There is more than one node */
-//	if dhtNode.successor != nil {
-//		dhtNode.successor.updateFingerTablesAux(dhtNode.nodeId)
-//	}
-//}
-
-//func(dhtNode * DHTNode) updateFingerTablesAux(nodeID string) {
-//	if dhtNode.nodeId != nodeID {
-//		
-//		/* This is not the first node */
-//		dhtNode.calcFingerTable()
-//		dhtNode.successor.updateFingerTablesAux(nodeID)
-//	}
-//}
-
-//func (dhtNode *DHTNode) calcFingerTable (){
-//	for k:=1; k<=SPACESIZE; k++ {
-//		n,_ :=hex.DecodeString(dhtNode.nodeId)
-//		idFinger,_ :=calcFinger(n, k, SPACESIZE)
-////		fmt.Println("idFinger = " + idFinger)
-//
-////		idFinger,_ :=calcFinger([]byte(dhtNode.nodeId), k, SPACESIZE)
-//		nodeFinger:= dhtNode.acceleratedLookupUsingFingers(idFinger)
-//		dhtNode.fingers[k-1] = new(Finger)
-//		dhtNode.fingers[k-1].fingerId=k
-//		dhtNode.fingers[k-1].nodeIdent=nodeFinger
-//	}
-//	fmt.Println("========================")
-//	fmt.Println("Nodo " + dhtNode.nodeId)
-//	fmt.Println(dhtNode.fingers[0].nodeIdent)
-//	fmt.Println(dhtNode.fingers[1].nodeIdent)
-//	fmt.Println(dhtNode.fingers[2].nodeIdent)
-//	fmt.Println("========================")
-//}
-
-func (dhtNode *DHTNode) SetPredecessor(newPredecessor *NetworkNode){
-	mutexPredeccessor.Lock()
-	dhtNode.predecessor=newPredecessor
-	mutexPredeccessor.Unlock()
-}
-
-func (dhtNode *DHTNode) SetSuccessor(newSuccessor *NetworkNode){
-	mutexSuccessor.Lock()
-	dhtNode.successor = newSuccessor
-	mutexSuccessor.Unlock()
+func (dhtNode *DHTNode) AddToRing(newDHTNode *NetworkNode) {
+	nodeResponsible := dhtNode.Lookup(newDHTNode.NodeId,dhtNode.ToNetworkNode(),"")
+	if nodeResponsible == nil {
+		fmt.Println("Error adding the node "+newDHTNode.NodeId)
+	}
+	dhtNode.SendInsertNodeBeforeMe(nodeResponsible,newDHTNode)
 }
 
 func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
@@ -197,6 +82,45 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 		}
 	}
 	mutexPredeccessor.Unlock()
+}
+
+func (dhtNode *DHTNode) updateFingerTables(){
+	dhtNode.calcFingerTable()
+	if dhtNode.GetSuccessor() != nil {
+		
+		/* More than one node in the ring */
+		dhtNode.SendUpdateFingerTablesAux(dhtNode.ToNetworkNode(), dhtNode.GetSuccessor())
+	}
+}
+
+func (dhtNode *DHTNode) updateFingerTablesAux(original *NetworkNode){
+	if dhtNode.GetNodeId() != original.NodeId {
+		dhtNode.calcFingerTable()
+		dhtNode.SendUpdateFingerTablesAux(original, dhtNode.GetSuccessor())
+	}
+}
+
+func (dhtNode *DHTNode) calcFingerTable (){
+	for k:=1; k<=SPACESIZE; k++ {
+		n,_ :=hex.DecodeString(dhtNode.nodeId)
+		idFinger,_ :=calcFinger(n, k, SPACESIZE)
+		nodeFinger:= dhtNode.Lookup(idFinger,dhtNode.ToNetworkNode(),"")
+		dhtNode.fingers[k-1] = new(Finger)
+		dhtNode.fingers[k-1].fingerId=k
+		dhtNode.fingers[k-1].nodeIdent=nodeFinger
+	}
+}
+
+func (dhtNode *DHTNode) SetPredecessor(newPredecessor *NetworkNode){
+	mutexPredeccessor.Lock()
+	dhtNode.predecessor=newPredecessor
+	mutexPredeccessor.Unlock()
+}
+
+func (dhtNode *DHTNode) SetSuccessor(newSuccessor *NetworkNode){
+	mutexSuccessor.Lock()
+	dhtNode.successor = newSuccessor
+	mutexSuccessor.Unlock()
 }
 
 /* GETTERS of the node */
@@ -324,108 +248,61 @@ func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode){
 		dhtNode.SendPrintRingAux(original, dhtNode.GetSuccessor())
 	}
 }
-//func (dhtNode *DHTNode) PrintRing (original *NetworkNode, first bool){
-//	if first {
-//		
-//		/* First node receiving the printring command */
-//		fmt.Println("Node " + dhtNode.GetNodeId())
-//		if dhtNode.GetSuccessor() != nil {
-//			//send
-//		}
-//	} else{
-//		if dhtNode.nodeId != original.NodeId {
-//			fmt.Println("Node " + dhtNode.GetNodeId())
-//			//send
-//		}
-//	}
-//	
-//}
 
-///* Return the responsible node for the key */
-//func (dhtNode *DHTNode) responsible(key string) bool {
-//	nodeResponsible:= dhtNode.acceleratedLookupUsingFingers(key)
-//	return nodeResponsible.nodeId == dhtNode.nodeId
-//}
+func (dhtNode *DHTNode) responsible(key string) bool {
+	nodeResponsible:= dhtNode.Lookup(key,dhtNode.ToNetworkNode(),"")
+	return nodeResponsible.NodeId == dhtNode.nodeId
+}
 
-//func (dhtNode *DHTNode) PrintFinger(k int, m int){
-////	fmt.Println("calculating result = (n+2^(k-1)) mod (2^m)")
-//
-//	// convert the n to a bigint
-//	nBigInt := big.Int{}
-//	n,_ := hex.DecodeString(dhtNode.nodeId)
-//	nBigInt.SetBytes(n)
-//
-//	fmt.Printf("n            %s\n",dhtNode.nodeId)
-//
-//	fmt.Printf("k            %d\n", k)
-//
-//	fmt.Printf("m            %d\n", m)
-//
-//	// get the right addend, i.e. 2^(k-1)
-//	two := big.NewInt(2)
-//	addend := big.Int{}
-//	addend.Exp(two, big.NewInt(int64(k-1)), nil)
-//
-//	fmt.Printf("2^(k-1)      %s\n", addend.String())
-//
-//	// calculate sum
-//	sum := big.Int{}
-//	sum.Add(&nBigInt, &addend)
-//
-//	fmt.Printf("(n+2^(k-1))  %s\n", sum.String())
-//
-//	// calculate 2^m
-//	ceil := big.Int{}
-//	ceil.Exp(two, big.NewInt(int64(m)), nil)
-//
-//	fmt.Printf("2^m          %s\n", ceil.String())
-//
-//	// apply the mod
-//	result := big.Int{}
-//	result.Mod(&sum, &ceil)
-//	
-//	resultBytes := result.Bytes()
-//	if len(resultBytes) == 0 {
-//		resultBytes = []byte{0}
-//	}
-//	resultHex := fmt.Sprintf("%x", resultBytes)
-//
-//	fmt.Printf("result       %s\n", result.String())
-//	fmt.Printf("successor    %s\n", dhtNode.acceleratedLookupUsingFingers(resultHex).nodeId)
-//}
-//
-//
-//func (dhtNode *DHTNode) PrintRing() {
-//	fmt.Println("======================")
-//	fmt.Println("Nodo " + dhtNode.nodeId)
-//	for i:=1;i<=SPACESIZE;i++ {
-//		fmt.Print("Finger ")
-//		fmt.Println(i)
-//		dhtNode.PrintFinger(i,SPACESIZE)
-//		fmt.Println("----------------------")
-//	}
-//	
-//	/* There is more than one node */
-//	if dhtNode.successor != nil {
-//		dhtNode.successor.printRingAux(dhtNode.nodeId)
-//	}
-//}
-//
-//func(dhtNode * DHTNode) printRingAux(nodeID string) {
-//	if dhtNode.nodeId != nodeID {
-//		
-//		/* This is not the first node */
-//		fmt.Println("======================")
-//		fmt.Println("Nodo " + dhtNode.nodeId)
-////		for i:=1;i<=SPACESIZE;i++ {
-////			fmt.Print("Finger ")
-////			fmt.Println(i)
-////			dhtNode.PrintFinger(i,SPACESIZE)
-////			fmt.Println("----------------------")
-////		}
-//		dhtNode.successor.printRingAux(nodeID)
-//	}
-//}
+func (dhtNode *DHTNode) PrintFinger(k int, m int){
+//	fmt.Println("calculating result = (n+2^(k-1)) mod (2^m)")
+
+	// convert the n to a bigint
+	nBigInt := big.Int{}
+	n,_ := hex.DecodeString(dhtNode.nodeId)
+	nBigInt.SetBytes(n)
+
+	fmt.Printf("n            %s\n",dhtNode.nodeId)
+
+	fmt.Printf("k            %d\n", k)
+
+	fmt.Printf("m            %d\n", m)
+
+	// get the right addend, i.e. 2^(k-1)
+	two := big.NewInt(2)
+	addend := big.Int{}
+	addend.Exp(two, big.NewInt(int64(k-1)), nil)
+
+	fmt.Printf("2^(k-1)      %s\n", addend.String())
+
+	// calculate sum
+	sum := big.Int{}
+	sum.Add(&nBigInt, &addend)
+
+	fmt.Printf("(n+2^(k-1))  %s\n", sum.String())
+
+	// calculate 2^m
+	ceil := big.Int{}
+	ceil.Exp(two, big.NewInt(int64(m)), nil)
+
+	fmt.Printf("2^m          %s\n", ceil.String())
+
+	// apply the mod
+	result := big.Int{}
+	result.Mod(&sum, &ceil)
+	
+	resultBytes := result.Bytes()
+	if len(resultBytes) == 0 {
+		resultBytes = []byte{0}
+	}
+	resultHex := fmt.Sprintf("%x", resultBytes)
+
+	fmt.Printf("result       %s\n", result.String())
+	fmt.Printf("successor    %s\n", dhtNode.Lookup(resultHex,dhtNode.ToNetworkNode(),"").NodeId)
+}
+
+
+
 
 func (dhtNode *DHTNode) ToNetworkNode() *NetworkNode {
 	networkNode := new(NetworkNode)
