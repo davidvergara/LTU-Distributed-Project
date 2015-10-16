@@ -8,7 +8,7 @@ import (
 )
 
 /* Consts */
-const SPACESIZE = 3
+const SPACESIZE = 160
 
 /* Contact struct */
 type Contact struct {
@@ -269,7 +269,7 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 
 func (dhtNode *DHTNode) PrintRing(){
 	fmt.Println("Node " + dhtNode.GetNodeId())
-	dhtNode.PrintFingerTable()
+	//dhtNode.PrintFingerTable()
 	if dhtNode.GetSuccessor() != nil {
 		
 		/* More than one node in the ring */
@@ -280,7 +280,7 @@ func (dhtNode *DHTNode) PrintRing(){
 func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode){
 	if dhtNode.GetNodeId() != original.NodeId {
 		fmt.Println("Node " + dhtNode.GetNodeId())
-		dhtNode.PrintFingerTable()
+		//dhtNode.PrintFingerTable()
 
 		/* Not printed all the ring */
 		dhtNode.SendPrintRingAux(original, dhtNode.GetSuccessor())

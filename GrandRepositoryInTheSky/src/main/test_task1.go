@@ -1,9 +1,10 @@
 package main
 
 import (
-//	"fmt"
+	"fmt"
 	"dht"
 	"time"
+	"strconv"
 //	"io/ioutil"
 )
 //
@@ -66,9 +67,9 @@ import (
 //	node0b.PrintRing()
 //}
 //
-func main() {
- 	
- 	id1 := "01"
+
+func task21(){
+	 	id1 := "01"
  	nodo1 := dht.MakeDHTNode(&id1,"localhost","1111")
  	nodo1.StartListenServer()
  	
@@ -144,8 +145,34 @@ func main() {
 //// 		nodo2.SendPrintRing(&nodoAConectar)
 // 	}()
  	nodo1.PrintRing()
- 	time.Sleep(3000 * time.Millisecond)
+ 	
  	nodo1.PrintRing()
  	time.Sleep(30000000000 * time.Millisecond)
+}
+func main() {
+ 	node0b := dht.MakeDHTNode(nil, "localhost", "1111")
+ 	node0b.StartListenServer()
+ 	for i:=1112; i<1320; i++{
+ 		
+ 			time.Sleep(150 * time.Millisecond)
+ 		
+ 		
+	 	go func() {
+	 			 	fmt.Printf("Routine %d sent \n",i)
 
+	 		node1b := dht.MakeDHTNode(nil, "localhost", strconv.Itoa(i))
+	 		node1b.StartListenServer()
+	 		node0b.AddToRing(node1b.ToNetworkNode())
+	 	}()
+	 	
+	 }
+ 	
+		
+//		fmt.Printf("Node %d added \n",i)
+
+	time.Sleep(15000 * time.Millisecond)
+//	node0b.PrintRing()
+	time.Sleep(120000 * time.Millisecond)
+	node0b.PrintRing()
+	time.Sleep(30000 * time.Millisecond)
 }

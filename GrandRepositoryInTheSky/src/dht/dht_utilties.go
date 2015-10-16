@@ -98,6 +98,7 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 func generateNodeId() string {
 	u, err := uuid.NewV4()
 	if err != nil {
+		fmt.Println("petatidadfsjskd")
 		panic(err)
 	}
 

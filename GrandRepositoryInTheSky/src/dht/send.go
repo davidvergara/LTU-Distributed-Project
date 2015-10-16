@@ -3,18 +3,20 @@ package dht
 import (
 	"net"
 	"encoding/json"
-//	"fmt"
+	"fmt"
 	"strconv"
 )
 
 func SetConnection(dest *NetworkNode) *net.UDPConn {
 	addr, err := net.ResolveUDPAddr("udp", dest.Ip+":"+dest.Port)
 	if err != nil {
+		fmt.Println("Marquez")
 		panic(err)
 	}
 	connection, err := net.DialUDP("udp", nil, addr)
 	
 	if err != nil {
+		fmt.Println("Parguelon")
 		panic(err)
 	}
 	return connection
