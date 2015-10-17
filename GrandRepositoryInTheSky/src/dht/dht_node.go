@@ -179,9 +179,13 @@ func (dhtNode *DHTNode) calcFingerTable (){
 		n,_ :=hex.DecodeString(dhtNode.nodeId)
 		idFinger,_ :=calcFinger(n, k, SPACESIZE)
 		nodeFinger:= dhtNode.Lookup(idFinger,dhtNode.ToNetworkNode(),"")
+		if nodeFinger==nil { 
+			fmt.Println("id finger "+idFinger)
+			fmt.Println("dhtNodeID "+dhtNode.GetNodeId())
+			fmt.Println("petada BRUTAAAAL jaja")		}
 		dhtNode.fingers[k-1] = new(Finger)
-		dhtNode.fingers[k-1].fingerId=k
 		dhtNode.fingers[k-1].nodeIdent=nodeFinger
+		dhtNode.fingers[k-1].fingerId=k
 	}
 }
 
@@ -209,7 +213,7 @@ func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup str
 			return dhtNode.ToNetworkNode()
 		} else{
 			dhtNode.SendLookupAnswer(dhtNode.ToNetworkNode() , sourceNode, idLookup)
-			return nil
+			return dhtNode.ToNetworkNode()
 		}
 	} else{
 		
@@ -225,7 +229,7 @@ func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup str
 				return dhtNode.Successor
 			} else{
 				dhtNode.SendLookupAnswer(dhtNode.Successor , sourceNode, idLookup)
-				return nil
+				return dhtNode.Successor
 			}
 		} else{
 			/* key not between nodeID and its successor */
@@ -236,12 +240,14 @@ func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup str
 			channel := dhtNode.SendLookup(key, dhtMinNode, sourceNode, idLookup)
 			
 			/* Waiting the answer */
-			if (dhtNode.nodeId == sourceNode.NodeId) {
-				select {
-					case answer := <- channel:
+//			if (dhtNode.nodeId == sourceNode.NodeId) {
+			if channel != nil{
+//				select {
+//					case answer := <- channel:
+						answer := <- channel
 						return answer
-				}
-				return nil
+//				}
+//				return nil
 			} else {
 				/* The node that called the function is just and intermediary */
 				return nil
@@ -253,30 +259,39 @@ func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup str
 /**
  * Return the closest finger of dhtNode to the key
  */
+//Return the closest finger of dhtNode to the key
 func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 	dhtNodeMin := dhtNode.Successor
+	
 	/* Key to HEX */
 	keyBytes,_ := hex.DecodeString(key)
+	
 	/* dhtNodeMin to HEX */
 	nodeIdBytes,_ := hex.DecodeString(dhtNodeMin.NodeId)
+	
 	minDist := distance(nodeIdBytes, keyBytes,SPACESIZE)
+	
+	/* Iterates over all the values of dhtNode.fingers */
 	for i,v := range dhtNode.fingers {
-		
-		if v!= nil {
-			fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.NodeId)
-			
-			if bytes.Compare(fingerBytes,nodeIdBytes) != 0 {
-				if between(fingerBytes, nodeIdBytes,keyBytes){
-					/* FingerID to HEX */
-					distance:= distance(fingerBytes, keyBytes,SPACESIZE)
-					if minDist.Cmp(distance) == 1{
-						minDist=distance
-						dhtNodeMin = dhtNode.fingers[i].nodeIdent
-						//fmt.Println("Nodo " + dhtNode.nodeId + " Distancia minima -> " + dhtNodeMin.nodeId + " key " + key)
+		if v!= nil{
+			if v.nodeIdent!= nil {
+				
+				/* finger[i] != nil */
+				fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.NodeId)
+				
+				if bytes.Compare(fingerBytes,nodeIdBytes) != 0 {
+					if between(fingerBytes, nodeIdBytes,keyBytes){
+						/* FingerID to HEX */
+						distance:= distance(fingerBytes, keyBytes,SPACESIZE)
+						if minDist.Cmp(distance) == 1{
+							
+							/* Updating closest finger */
+							minDist=distance
+							dhtNodeMin = dhtNode.fingers[i].nodeIdent
+						}
 					}
 				}
 			}
-			
 		}
 	}
 	return dhtNodeMin
