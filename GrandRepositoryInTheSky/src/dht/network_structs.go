@@ -3,12 +3,14 @@ package dht
 import (
 )
 
+//Network node struct
 type NetworkNode struct {
 	NodeId string
 	Ip string
 	Port string
 }
 
+//Message struct
 type Msg struct {
 	Source *NetworkNode
 	Dest *NetworkNode
@@ -16,6 +18,7 @@ type Msg struct {
 	Args map[string]string
 }
 
+//Converts a DHTNode in a NetworkNode, that can be sent
 func (dhtNode *DHTNode) ToNetworkNode() *NetworkNode {
 	networkNode := new(NetworkNode)
 	networkNode.NodeId = dhtNode.GetNodeId()

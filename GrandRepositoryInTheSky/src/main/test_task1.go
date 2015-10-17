@@ -7,6 +7,8 @@ import (
 	"strconv"
 )
 
+//Test function number 1 for the Objective 2
+//It works with a SPACESIZE of 3 bits
 func task21(){
 	 	id1 := "01"
  	nodo1 := dht.MakeDHTNode(&id1,"localhost","1111")
@@ -89,6 +91,8 @@ func task21(){
  	time.Sleep(30000000000 * time.Millisecond)
 }
 
+//Test function number 2 for the Objective 2
+//It works with a SPACESIZE of 160 bits
 func task22(){
 	node0b := dht.MakeDHTNode(nil, "localhost", "1111")
  	node0b.StartListenServer()
@@ -110,6 +114,7 @@ func task22(){
 	time.Sleep(10000 * time.Millisecond)
 }
 
+//Main function
 func main() {
 	task22()
 	//task21()
