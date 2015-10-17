@@ -3,26 +3,25 @@ package dht
 import (
 	"net"
 	"encoding/json"
-	"fmt"
+//	"fmt"
 	"strconv"
 )
 
+//Set an UDP connection with the node passed as parameter
 func SetConnection(dest *NetworkNode) *net.UDPConn {
 	addr, err := net.ResolveUDPAddr("udp", dest.Ip+":"+dest.Port)
 	if err != nil {
-		fmt.Println("Marquez")
 		panic(err)
 	}
 	connection, err := net.DialUDP("udp", nil, addr)
 	
 	if err != nil {
-		fmt.Println("Parguelon")
 		panic(err)
 	}
 	return connection
 }
 
-
+//Sends the message passed as parameter to the destination
 func Send(dest *NetworkNode, message Msg) {
 	conn := SetConnection(dest)
 
@@ -34,6 +33,7 @@ func Send(dest *NetworkNode, message Msg) {
 		}
 		
 		conn.Write(buffer)
+		conn.Close()
 		
 	}()
 }
@@ -71,6 +71,10 @@ func (dhtNode *DHTNode) SendLookup(key string, dhtMinNode *NetworkNode,
 	}
 }
 
+//Sends to the destination (sourceNode) a LOOKUPANSER type message. 
+//AnswerNode: node responsible for the key that a node was looking for
+//SourceNode: node that made the first lookup request
+//idLookup: id of the lookup request, to be stored in that channel
 func (dhtNode *DHTNode) SendLookupAnswer(answerNode *NetworkNode, sourceNode *NetworkNode, idLookup string){
 
 	mess := Msg{Source: answerNode,
@@ -82,6 +86,7 @@ func (dhtNode *DHTNode) SendLookupAnswer(answerNode *NetworkNode, sourceNode *Ne
 	Send(sourceNode, mess)
 }	
 
+//Sends to the destination a SETPREDECESSOR message
 func (dhtNode *DHTNode) SendSetPredecessor(dest *NetworkNode, newPredecessor *NetworkNode){
 	mess := Msg{Source: newPredecessor,
 				Dest: dest,
@@ -91,6 +96,7 @@ func (dhtNode *DHTNode) SendSetPredecessor(dest *NetworkNode, newPredecessor *Ne
 	Send(dest,mess)
 }
 
+//Sends to the destination a SETUCCESSOR message
 func (dhtNode *DHTNode) SendSetSuccessor(dest *NetworkNode, newSuccessor *NetworkNode){
 	mess := Msg{Source: newSuccessor,
 			Dest: dest,
@@ -100,6 +106,7 @@ func (dhtNode *DHTNode) SendSetSuccessor(dest *NetworkNode, newSuccessor *Networ
 	Send(dest, mess)
 }
 
+//Sends to the destination a PRINTRING message (starting printing ring)
 func (dhtNode *DHTNode) SendPrintRing(dest *NetworkNode){
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
 				Dest: dest,
@@ -109,6 +116,7 @@ func (dhtNode *DHTNode) SendPrintRing(dest *NetworkNode){
 	Send(dest,mess)
 }
 
+//Sends to the destination a PRINTRINGAUX message (continuing printing ring)
 func (dhtNode *DHTNode) SendPrintRingAux(original *NetworkNode, dest *NetworkNode){
 	mess := Msg{Source: original,
 				Dest: dest,
@@ -118,6 +126,8 @@ func (dhtNode *DHTNode) SendPrintRingAux(original *NetworkNode, dest *NetworkNod
 	Send(dest,mess)
 }
 
+//Sends to the destination a ADDTORING message.
+//NewNode: node to be added
 func (dhtNode *DHTNode) SendAddToRing(dest *NetworkNode, newNode *NetworkNode){
 	mess := Msg{Source: newNode,
 				Dest: dest,
@@ -127,6 +137,7 @@ func (dhtNode *DHTNode) SendAddToRing(dest *NetworkNode, newNode *NetworkNode){
 	Send(dest,mess)
 }
 
+//Sends to the destination a UPDATEFINGERTABLES message (starting updating fingers)
 func (dhtNode *DHTNode) SendUpdateFingerTables(dest *NetworkNode){
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
 				Dest: dest,
@@ -136,6 +147,7 @@ func (dhtNode *DHTNode) SendUpdateFingerTables(dest *NetworkNode){
 	Send(dest,mess)
 }
 
+//Sends to the destination a UPDATEFINGERTABLESAUX message (continuing updating finger)
 func (dhtNode *DHTNode) SendUpdateFingerTablesAux(original *NetworkNode, dest *NetworkNode){
 	mess := Msg{Source: original,
 				Dest: dest,
@@ -145,6 +157,9 @@ func (dhtNode *DHTNode) SendUpdateFingerTablesAux(original *NetworkNode, dest *N
 	Send(dest,mess)
 }
 
+//Sends to the destination a SENDINSERTNODEBEFOREME message
+//NodeToInsert: node to be inserted
+//NodeResponsible: node that has to insert the node
 func (dhtNode *DHTNode) SendInsertNodeBeforeMe (nodeResponsible *NetworkNode,nodeToInsert *NetworkNode){
 	mess := Msg{Source: nodeToInsert,
 				Dest: nodeResponsible,

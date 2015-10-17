@@ -43,7 +43,7 @@ type Finger struct {
 }
 
 
-//Creates a DHTNode with the atributes passed as arguments, and initializes
+//Creates a DHTNode with the atributes passed as parameters, and initializes
 //some global variables.
 func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode := new(DHTNode)
@@ -200,14 +200,21 @@ func (dhtNode *DHTNode) SetSuccessor(newSuccessor *NetworkNode){
 	dhtNode.mutexSuccessor.Unlock()
 }
 
+//Returns the node responsible for the key passed as parameter
+//SourceNode: Node that invoqued lookup originally
+//idLookup: Id of the request (may be empty)
 func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup string) *NetworkNode {
 	
 	if dhtNode.nodeId == key || dhtNode.Successor == nil {
 		
+		/* I am responsible for the key || I am the only node in the ring */
 		if (dhtNode.nodeId == sourceNode.NodeId){
-			/* key == nodeID, I answer my query*/
+			
+			/* key == nodeID, I answer (me) my query*/
 			return dhtNode.ToNetworkNode()
 		} else{
+			
+			/* I send the answer (me) to the node that asked originally for it */
 			dhtNode.SendLookupAnswer(dhtNode.ToNetworkNode() , sourceNode, idLookup)
 			return nil
 		}
@@ -221,21 +228,23 @@ func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup str
 
 			/* key between nodeID and its successor */
 			if (dhtNode.nodeId == sourceNode.NodeId){
-				/* key == nodeID, I answer my query*/
+				
+				/* key == nodeID, I answer (my successor) my query*/
 				return dhtNode.Successor
 			} else{
+				
+				/* I send the answer (my successor) to the node that asked originally for it */
 				dhtNode.SendLookupAnswer(dhtNode.Successor , sourceNode, idLookup)
 				return nil
 			}
 		} else{
+			
 			/* key not between nodeID and its successor */
-			
-			
 			/* return the closest finger to the key */
 			dhtMinNode:= dhtNode.calcNodeMinDist(key)
 			channel := dhtNode.SendLookup(key, dhtMinNode, sourceNode, idLookup)
 			
-			/* Waiting the answer */
+			/* Waiting the answer in the channel*/
 			if (dhtNode.nodeId == sourceNode.NodeId) {
 				select {
 					case answer := <- channel:
@@ -250,9 +259,7 @@ func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup str
 	}
 }
 
-/**
- * Return the closest finger of dhtNode to the key
- */
+//Return the closest finger of dhtNode to the key
 func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 	dhtNodeMin := dhtNode.Successor
 	/* Key to HEX */
@@ -260,9 +267,13 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 	/* dhtNodeMin to HEX */
 	nodeIdBytes,_ := hex.DecodeString(dhtNodeMin.NodeId)
 	minDist := distance(nodeIdBytes, keyBytes,SPACESIZE)
+	
+	/* Iterates over all the values of dhtNode.fingers */
 	for i,v := range dhtNode.fingers {
 		
 		if v!= nil {
+			
+			/* finger[i] != nil */
 			fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.NodeId)
 			
 			if bytes.Compare(fingerBytes,nodeIdBytes) != 0 {
@@ -270,19 +281,19 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 					/* FingerID to HEX */
 					distance:= distance(fingerBytes, keyBytes,SPACESIZE)
 					if minDist.Cmp(distance) == 1{
+						
+						/* Updating closest finger */
 						minDist=distance
 						dhtNodeMin = dhtNode.fingers[i].nodeIdent
-						//fmt.Println("Nodo " + dhtNode.nodeId + " Distancia minima -> " + dhtNodeMin.nodeId + " key " + key)
 					}
 				}
 			}
-			
 		}
 	}
 	return dhtNodeMin
 }
 
-
+//Prints myself and sends printRingAux message to my successor
 func (dhtNode *DHTNode) PrintRing(){
 	fmt.Println("Node " + dhtNode.GetNodeId())
 	//dhtNode.PrintFingerTable()
@@ -293,24 +304,33 @@ func (dhtNode *DHTNode) PrintRing(){
 	}
 }
 
+//If I was not the first node printing the ring, prints myself and sends
+//printRingAux to my successor
 func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode){
 	if dhtNode.GetNodeId() != original.NodeId {
+		
+		/* Not printed all the ring */
 		fmt.Println("Node " + dhtNode.GetNodeId())
+		
+		/* TO TEST PRINTING FINGER TABLE WITH TEST22() */
 //		if dhtNode.GetPort() == "1180" || dhtNode.GetPort() == "1160"{
 //			dhtNode.PrintFingerTable()
 //		}
-		/* Not printed all the ring */
+
 		dhtNode.SendPrintRingAux(original, dhtNode.GetSuccessor())
 	}
 }
 
+//Returns true if this node is responsible for the key passed as parameter.
+//Otherwise, returns false
 func (dhtNode *DHTNode) responsible(key string) bool {
 	nodeResponsible:= dhtNode.Lookup(key,dhtNode.ToNetworkNode(),"")
 	return nodeResponsible.NodeId == dhtNode.nodeId
 }
 
+//Prints the finger k of this node (SPACESIZE = m)
 func (dhtNode *DHTNode) PrintFinger(k int, m int){
-//	fmt.Println("calculating result = (n+2^(k-1)) mod (2^m)")
+	//	fmt.Println("calculating result = (n+2^(k-1)) mod (2^m)")
 
 	// convert the n to a bigint
 	nBigInt := big.Int{}
@@ -356,7 +376,7 @@ func (dhtNode *DHTNode) PrintFinger(k int, m int){
 	fmt.Printf("successor    %s\n", dhtNode.Lookup(resultHex,dhtNode.ToNetworkNode(),"").NodeId)
 }
 
-
+//Prints all the fingers of this node
 func (dhtNode *DHTNode) PrintFingerTable() {
 	for i,v := range dhtNode.fingers {
 		if v != nil {
