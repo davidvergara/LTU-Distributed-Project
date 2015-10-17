@@ -104,7 +104,7 @@ func (receive *DHTNode) receiveLookup (message Msg){
 
 func (receive *DHTNode) receiveLookupAnswer (message Msg){
 	idLookup,_ := strconv.Atoi(message.Args["lookUpId"])
-	LookupRequest[idLookup] <- message.Source
+	receive.LookupRequest[idLookup] <- message.Source
 }
 
 func (receive *DHTNode) receiveSetPredecessor (message Msg){

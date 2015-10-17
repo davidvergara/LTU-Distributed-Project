@@ -5,68 +5,7 @@ import (
 	"dht"
 	"time"
 	"strconv"
-//	"io/ioutil"
 )
-//
-//func task1 () {
-//	id0 := "00"
-//	id1 := "01"
-////	id2 := "02"
-//	id3 := "03"
-//	id4 := "03"
-//	id5 := "05"
-////	id6 := "06"
-//	id7 := "07"
-//
-////	node0b := dht.MakeDHTNode(nil, "localhost", "1111")
-////	node1b := dht.MakeDHTNode(nil, "localhost", "1112")
-////	node2b := dht.MakeDHTNode(nil, "localhost", "1113")
-////	node3b := dht.MakeDHTNode(nil, "localhost", "1114")
-////	node4b := dht.MakeDHTNode(nil, "localhost", "1115")
-//////	node5b := dht.MakeDHTNode(nil, "localhost", "1116")
-////	node6b := dht.MakeDHTNode(nil, "localhost", "1117")
-////	node7b := dht.MakeDHTNode(nil, "localhost", "1118")
-////
-//	node0b := dht.MakeDHTNode(&id0, "localhost", "1111")
-//	node1b := dht.MakeDHTNode(&id1, "localhost", "1112")
-////	node2b := dht.MakeDHTNode(&id2, "localhost", "1113")
-//	node3b := dht.MakeDHTNode(&id3, "localhost", "1114")
-//	node4b := dht.MakeDHTNode(&id4, "localhost", "1115")
-//	node5b := dht.MakeDHTNode(&id5, "localhost", "1116")
-////	node6b := dht.MakeDHTNode(&id6, "localhost", "1117")
-//	node7b := dht.MakeDHTNode(&id7, "localhost", "1118")
-//
-////	node1b.AddToRing(node2b)
-//	node1b.AddToRing(node0b)
-//	node1b.AddToRing(node3b)
-//	node1b.AddToRing(node4b)
-//	node4b.AddToRing(node5b)
-////	node3b.AddToRing(node6b)
-//	node3b.AddToRing(node7b)
-//
-//	fmt.Println("-> ring structure")
-//	node1b.PrintRing()
-//	
-//	fmt.Println()
-//	
-//	//nodeSearched := node1b.Lookup("08")
-////	fmt.Print("Node searched (lookup) -> ")
-//	//fmt.Println(nodeSearched.GetNodeId())
-//}
-//
-//func task2() {
-//	node0b := dht.MakeDHTNode(nil, "localhost", "1111")
-//	
-//	for i:=0; i<100; i++{
-//		node1b := dht.MakeDHTNode(nil, "localhost", "1111")
-//		node0b.AddToRing(node1b)
-//		fmt.Printf("Node %d added \n",i)
-//	}
-//	
-//	fmt.Println("-> ring structure")
-//	node0b.PrintRing()
-//}
-//
 
 func task21(){
 	 	id1 := "01"
@@ -145,21 +84,20 @@ func task21(){
 //// 		nodo2.SendPrintRing(&nodoAConectar)
 // 	}()
  	nodo1.PrintRing()
- 	
+ 	time.Sleep(5000 * time.Millisecond)
  	nodo1.PrintRing()
  	time.Sleep(30000000000 * time.Millisecond)
 }
-func main() {
- 	node0b := dht.MakeDHTNode(nil, "localhost", "1111")
+
+func task22(){
+	node0b := dht.MakeDHTNode(nil, "localhost", "1111")
  	node0b.StartListenServer()
- 	for i:=1112; i<1320; i++{
+ 	for i:=1112; i<1220; i++{
  		
- 			time.Sleep(150 * time.Millisecond)
- 		
+ 		time.Sleep(150 * time.Millisecond)
  		
 	 	go func() {
-	 			 	fmt.Printf("Routine %d sent \n",i)
-
+			fmt.Println("Sent routine "+strconv.Itoa(i))
 	 		node1b := dht.MakeDHTNode(nil, "localhost", strconv.Itoa(i))
 	 		node1b.StartListenServer()
 	 		node0b.AddToRing(node1b.ToNetworkNode())
@@ -167,12 +105,12 @@ func main() {
 	 	
 	 }
  	
-		
-//		fmt.Printf("Node %d added \n",i)
-
-	time.Sleep(15000 * time.Millisecond)
-//	node0b.PrintRing()
-	time.Sleep(120000 * time.Millisecond)
+	time.Sleep(5000 * time.Millisecond)
 	node0b.PrintRing()
-	time.Sleep(30000 * time.Millisecond)
+	time.Sleep(10000 * time.Millisecond)
+}
+
+func main() {
+	task22()
+	//task21()
 }

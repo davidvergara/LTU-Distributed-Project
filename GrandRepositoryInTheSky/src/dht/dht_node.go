@@ -5,10 +5,16 @@ import (
 	"bytes"
 	"math/big"
 	"encoding/hex"
+	"sync"
 )
 
 /* Consts */
 const SPACESIZE = 160
+//var NumLookup = 0
+//var LookupRequest 	map[int]chan *NetworkNode
+//var mutexNumLookup = &sync.Mutex{}
+//var mutexPredeccessor = &sync.Mutex{}
+//var mutexSuccessor = &sync.Mutex{} 
 
 /* Contact struct */
 type Contact struct {
@@ -23,6 +29,11 @@ type DHTNode struct {
 	Predecessor		*NetworkNode
 	contact			Contact
 	fingers			[]*Finger
+	NumLookup int
+	LookupRequest 	map[int]chan *NetworkNode
+	mutexNumLookup  sync.Mutex
+	mutexPredeccessor  sync.Mutex
+	mutexSuccessor  sync.Mutex
 }
 
 /* Finger struct */
@@ -50,7 +61,14 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.Predecessor = nil
 	dhtNode.fingers = make([]*Finger, SPACESIZE)
 	
-	LookupRequest = make(map[int]chan *NetworkNode)
+	dhtNode.NumLookup=0
+	//dhtNode.LookupRequest= make map[int]chan *NetworkNode
+
+	//var LookupRequest 	map[int]chan *NetworkNode
+
+	dhtNode.LookupRequest = make(map[int]chan *NetworkNode)
+	
+	
 	return dhtNode
 }
 
@@ -94,7 +112,7 @@ func (dhtNode *DHTNode) AddToRing(newDHTNode *NetworkNode) {
 //Local node inserts the new node before it if that place is still valid. If not,
 //calls AddToRing again to reallocate the node.
 func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
-	mutexPredeccessor.Lock()
+	dhtNode.mutexPredeccessor.Lock()
 	valueNode,_ :=hex.DecodeString(dhtNode.nodeId)
 	valueNodeNew,_ := hex.DecodeString(newNode.NodeId)
 	if bytes.Compare(valueNode, valueNodeNew)==0 {
@@ -110,7 +128,6 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 			dhtNode.SendSetPredecessor(newNode, dhtNode.ToNetworkNode())
 			dhtNode.Predecessor = newNode
 			dhtNode.Successor = newNode
-			fmt.Println("Insertado aqui el nodo " + newNode.NodeId)
 			dhtNode.updateFingerTables()
 		} else{
 			
@@ -128,13 +145,12 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 				dhtNode.Predecessor = newNode
 				dhtNode.updateFingerTables()
 			} else{
-				
 				/* This is not the right place anymore -> we have to find it out again */
 				dhtNode.AddToRing(newNode)
 			}
 		}
 	}
-	mutexPredeccessor.Unlock()
+	dhtNode.mutexPredeccessor.Unlock()
 }
 
 //Update the finger table of all the nodes in the ring
@@ -171,17 +187,17 @@ func (dhtNode *DHTNode) calcFingerTable (){
 
 //Puts newPredecessor as the predecessor of the local node
 func (dhtNode *DHTNode) SetPredecessor(newPredecessor *NetworkNode){
-	mutexPredeccessor.Lock()
+	dhtNode.mutexPredeccessor.Lock()
 	dhtNode.Predecessor=newPredecessor
-	mutexPredeccessor.Unlock()
+	dhtNode.mutexPredeccessor.Unlock()
 }
 
 //Puts newSucessor as the successor of the local node
 func (dhtNode *DHTNode) SetSuccessor(newSuccessor *NetworkNode){
 //	fmt.Println("Nodo " + dhtNode.nodeId + " poniendo sucesor " + newSuccessor.NodeId)
-	mutexSuccessor.Lock()
+	dhtNode.mutexSuccessor.Lock()
 	dhtNode.Successor = newSuccessor
-	mutexSuccessor.Unlock()
+	dhtNode.mutexSuccessor.Unlock()
 }
 
 func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup string) *NetworkNode {
@@ -280,8 +296,9 @@ func (dhtNode *DHTNode) PrintRing(){
 func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode){
 	if dhtNode.GetNodeId() != original.NodeId {
 		fmt.Println("Node " + dhtNode.GetNodeId())
-		//dhtNode.PrintFingerTable()
-
+//		if dhtNode.GetPort() == "1180" || dhtNode.GetPort() == "1160"{
+//			dhtNode.PrintFingerTable()
+//		}
 		/* Not printed all the ring */
 		dhtNode.SendPrintRingAux(original, dhtNode.GetSuccessor())
 	}
@@ -339,16 +356,6 @@ func (dhtNode *DHTNode) PrintFinger(k int, m int){
 	fmt.Printf("successor    %s\n", dhtNode.Lookup(resultHex,dhtNode.ToNetworkNode(),"").NodeId)
 }
 
-
-
-
-func (dhtNode *DHTNode) ToNetworkNode() *NetworkNode {
-	networkNode := new(NetworkNode)
-	networkNode.NodeId = dhtNode.GetNodeId()
-	networkNode.Ip = dhtNode.GetIp()
-	networkNode.Port = dhtNode.GetPort()
-	return networkNode
-}
 
 func (dhtNode *DHTNode) PrintFingerTable() {
 	for i,v := range dhtNode.fingers {

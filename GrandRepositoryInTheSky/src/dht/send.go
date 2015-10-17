@@ -43,8 +43,8 @@ func (dhtNode *DHTNode) SendLookup(key string, dhtMinNode *NetworkNode,
 
 	if (dhtNode.nodeId == sourceNode.NodeId) {
 		/* We need a channel to save the answer */
-		mutexNumLookup.Lock()
-		numLookupString := strconv.Itoa(NumLookup)
+		dhtNode.mutexNumLookup.Lock()
+		numLookupString := strconv.Itoa(dhtNode.NumLookup)
 		mess := Msg{Source: sourceNode,
 			Dest: dhtMinNode,
  			Type: "LOOKUP", 
@@ -53,9 +53,9 @@ func (dhtNode *DHTNode) SendLookup(key string, dhtMinNode *NetworkNode,
  					"lookUpId": numLookupString}}
 			
 		answerChannel:= make(chan *NetworkNode)
-		LookupRequest[NumLookup]=answerChannel
-		NumLookup++
-		mutexNumLookup.Unlock()
+		dhtNode.LookupRequest[dhtNode.NumLookup]=answerChannel
+		dhtNode.NumLookup++
+		dhtNode.mutexNumLookup.Unlock()
 		Send(dhtMinNode, mess)
 		return answerChannel
 	} else {
