@@ -100,7 +100,7 @@ func task22(){
  		
  		time.Sleep(150 * time.Millisecond)
  		
-	 	go func() {
+	 	go func() { 
 			fmt.Println("Sent routine "+strconv.Itoa(i))
 	 		node1b := dht.MakeDHTNode(nil, "localhost", strconv.Itoa(i))
 	 		node1b.StartListenServer()
@@ -113,6 +113,7 @@ func task22(){
 	node0b.PrintRing()
 	time.Sleep(10000 * time.Millisecond)
 }
+
 
 //Main function
 func main() {

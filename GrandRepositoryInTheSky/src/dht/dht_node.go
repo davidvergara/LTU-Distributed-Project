@@ -393,3 +393,5 @@ func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {
 	dist := distance(idBytes, fingerSuccessorBytes, bits)
 	fmt.Println("distance     " + dist.String()) */
 }
+
+
