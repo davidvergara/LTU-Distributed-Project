@@ -15,13 +15,11 @@ func (receive *DHTNode) StartListenServer(){
 	
 	addr, err := net.ResolveUDPAddr("udp",(":"+receive.GetPort()))
 	if err != nil {
-		fmt.Println("tolai")
 		panic(err)
 	}
 	
 	conn, err := net.ListenUDP("udp",addr)
 	if err != nil {
-		fmt.Println("hijo")
 		panic(err)
 	}
 	
@@ -50,7 +48,6 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 	var message Msg
 	err := json.Unmarshal(bytesReceived, &message)
 	if err != nil {
-		fmt.Println("puta")
 		panic (err)
 	}
 	switch 
