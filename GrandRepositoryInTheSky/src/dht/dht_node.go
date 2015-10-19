@@ -262,63 +262,30 @@ func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup str
 //Return the closest finger of dhtNode to the key
 func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 	dhtNodeMin := dhtNode.Successor
-	if dhtNodeMin == nil {
-		fmt.Println("dhtNode.Successor = nil")
-	}
-	
-	if key == "" {
-		fmt.Println("key = nil")
-	}
-	
 	/* Key to HEX */
 	keyBytes,_ := hex.DecodeString(key)
-	
-	if keyBytes == nil {
-		fmt.Println("keyBytes = nil")
-	}
-	
-	if dhtNodeMin.NodeId == "" {
-		fmt.Println("id dhtnode = nil")
-	}
 	/* dhtNodeMin to HEX */
 	nodeIdBytes,_ := hex.DecodeString(dhtNodeMin.NodeId)
-	
-	if nodeIdBytes == nil {
-		fmt.Println("nodeIdBytes = nil")
-	}
 	minDist := distance(nodeIdBytes, keyBytes,SPACESIZE)
 	
-	if minDist == nil {
-		fmt.Println("minDist = nil")
-	}
-	
 	/* Iterates over all the values of dhtNode.fingers */
-	if dhtNode.fingers == nil {
-		fmt.Println("fingers = nil")
-	}
 	for i,v := range dhtNode.fingers {
-		
-		if v!= nil {
-			
-			/* finger[i] != nil */
-			if dhtNode.fingers[i].nodeIdent == nil {
-				fmt.Println("nodeIdent = nil")
-			}
-			fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.NodeId)
-			
-			if fingerBytes == nil {
-				fmt.Println("fingerBytes = nil")
-			}
-			
-			if bytes.Compare(fingerBytes,nodeIdBytes) != 0 {
-				if between(fingerBytes, nodeIdBytes,keyBytes){
-					/* FingerID to HEX */
-					distance:= distance(fingerBytes, keyBytes,SPACESIZE)
-					if minDist.Cmp(distance) == 1{
-						
-						/* Updating closest finger */
-						minDist=distance
-						dhtNodeMin = dhtNode.fingers[i].nodeIdent
+		if v!= nil{
+			if v.nodeIdent!= nil {
+				
+				/* finger[i] != nil */
+				fingerBytes,_ := hex.DecodeString(dhtNode.fingers[i].nodeIdent.NodeId)
+				
+				if bytes.Compare(fingerBytes,nodeIdBytes) != 0 {
+					if between(fingerBytes, nodeIdBytes,keyBytes){
+						/* FingerID to HEX */
+						distance:= distance(fingerBytes, keyBytes,SPACESIZE)
+						if minDist.Cmp(distance) == 1{
+							
+							/* Updating closest finger */
+							minDist=distance
+							dhtNodeMin = dhtNode.fingers[i].nodeIdent
+						}
 					}
 				}
 			}
