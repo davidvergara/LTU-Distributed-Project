@@ -6,15 +6,14 @@ import (
 	"math/big"
 	"encoding/hex"
 	"sync"
+	"time"
 )
 
 /* Consts */
-const SPACESIZE = 160
-//var NumLookup = 0
-//var LookupRequest 	map[int]chan *NetworkNode
-//var mutexNumLookup = &sync.Mutex{}
-//var mutexPredeccessor = &sync.Mutex{}
-//var mutexSuccessor = &sync.Mutex{} 
+const SPACESIZE = 3
+
+const HEARTBEATPERIOD = time.Second * 5
+const HEARTBEATEXPIRATION = time.Second * 2
 
 /* Contact struct */
 type Contact struct {
@@ -27,13 +26,20 @@ type DHTNode struct {
 	nodeId   		string
 	Successor  		*NetworkNode
 	Predecessor		*NetworkNode
+	PredOfPred		*NetworkNode	
 	contact			Contact
 	fingers			[]*Finger
+	
 	NumLookup int
 	LookupRequest 	map[int]chan *NetworkNode
+	NumHeartBeat int
+	HeartBeatRequest map[int]chan *NetworkNode
+	
 	mutexNumLookup  sync.Mutex
+	mutexNumHeartBeat sync.Mutex
 	mutexPredeccessor  sync.Mutex
 	mutexSuccessor  sync.Mutex
+	mutexPredOfPred	sync.Mutex
 }
 
 /* Finger struct */
@@ -59,15 +65,17 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 
 	dhtNode.Successor = nil
 	dhtNode.Predecessor = nil
+	dhtNode.PredOfPred = nil
 	dhtNode.fingers = make([]*Finger, SPACESIZE)
 	
 	dhtNode.NumLookup=0
+	dhtNode.NumHeartBeat=0
 	//dhtNode.LookupRequest= make map[int]chan *NetworkNode
 
 	//var LookupRequest 	map[int]chan *NetworkNode
 
 	dhtNode.LookupRequest = make(map[int]chan *NetworkNode)
-	
+	dhtNode.HeartBeatRequest = make(map[int]chan *NetworkNode)
 	
 	return dhtNode
 }
@@ -192,12 +200,19 @@ func (dhtNode *DHTNode) SetPredecessor(newPredecessor *NetworkNode){
 	dhtNode.mutexPredeccessor.Unlock()
 }
 
+//Puts local node's successor as local node's predecessor's successor of successor
 //Puts newSucessor as the successor of the local node
 func (dhtNode *DHTNode) SetSuccessor(newSuccessor *NetworkNode){
-//	fmt.Println("Nodo " + dhtNode.nodeId + " poniendo sucesor " + newSuccessor.NodeId)
 	dhtNode.mutexSuccessor.Lock()
 	dhtNode.Successor = newSuccessor
 	dhtNode.mutexSuccessor.Unlock()
+}
+
+//Puts newPredOfPred as the predecessor of the predecessor of the local node
+func (dhtNode *DHTNode) SetPredOfPred(newPredOfPred *NetworkNode){
+	dhtNode.mutexPredOfPred.Lock()
+	dhtNode.PredOfPred = newPredOfPred
+	dhtNode.mutexPredOfPred.Unlock()
 }
 
 //Returns the node responsible for the key passed as parameter
@@ -296,10 +311,16 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 
 //Prints myself and sends printRingAux message to my successor
 func (dhtNode *DHTNode) PrintRing(){
+	fmt.Println("Printing ring...")
 	fmt.Println("Node " + dhtNode.GetNodeId())
 	//dhtNode.PrintFingerTable()
 	if dhtNode.GetSuccessor() != nil {
-		
+//		fmt.Println("-Predecessor: " + dhtNode.Predecessor.NodeId)
+//		fmt.Println("-Successor: " + dhtNode.Successor.NodeId)
+//		
+//		if dhtNode.PredOfPred != nil {
+//			fmt.Println("-PredOfPred: " + dhtNode.PredOfPred.NodeId)
+//		}
 		/* More than one node in the ring */
 		dhtNode.SendPrintRingAux(dhtNode.ToNetworkNode(), dhtNode.GetSuccessor())
 	}
@@ -312,6 +333,13 @@ func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode){
 		
 		/* Not printed all the ring */
 		fmt.Println("Node " + dhtNode.GetNodeId())
+//		fmt.Println("-Predecessor: " + dhtNode.Predecessor.NodeId)
+//		fmt.Println("-Successor: " + dhtNode.Successor.NodeId)
+//		
+//		if dhtNode.PredOfPred != nil {
+//			fmt.Println("-PredOfPred: " + dhtNode.PredOfPred.NodeId)
+//		}
+//		fmt.Println("-SuccOfSucc: " + dhtNode.SuccOfSucc.NodeId)
 		
 		/* TO TEST PRINTING FINGER TABLE WITH TEST22() */
 //		if dhtNode.GetPort() == "1180" || dhtNode.GetPort() == "1160"{
@@ -387,6 +415,51 @@ func (dhtNode *DHTNode) PrintFingerTable() {
 		}
 		
 	}
+}
+
+func (dhtNode *DHTNode) StartHeartBeats(){
+	for {
+		time.Sleep(HEARTBEATPERIOD)
+		if dhtNode.Predecessor != nil{
+			
+			/* Channel to receive our PredPred */
+			channel := dhtNode.SendHeartBeat(dhtNode.Predecessor)
+			select {
+				case answer := <- channel:
+				{	
+					/* Our predecessor is alive */
+					//fmt.Println("--Node " + dhtNode.nodeId + " putting his Pred of Pred as " + answer.NodeId)
+					dhtNode.SetPredOfPred(answer)
+				}	
+				case <-time.After(HEARTBEATEXPIRATION):
+				{
+					
+					/* Our predecessor is dead */
+					dhtNode.DeadPredecessor()
+				}					
+			}
+		}
+	}
+}
+
+func (dhtNode *DHTNode) DeadPredecessor(){
+	dhtNode.mutexPredeccessor.Lock()
+	if dhtNode.PredOfPred == nil || dhtNode.PredOfPred.NodeId == dhtNode.nodeId {
+		
+		/* This is the only node remaining in the ring */
+		dhtNode.Successor = nil
+		dhtNode.Predecessor = nil
+		dhtNode.PredOfPred = nil
+	} else{
+		
+		/* There are more nodes in the ring */
+		dhtNode.SendSetSuccessor(dhtNode.PredOfPred,dhtNode.ToNetworkNode())
+		dhtNode.Predecessor = dhtNode.PredOfPred
+		dhtNode.PredOfPred = nil
+	}
+	dhtNode.updateFingerTables()
+	dhtNode.mutexPredeccessor.Unlock()
+	
 }
 
 func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {

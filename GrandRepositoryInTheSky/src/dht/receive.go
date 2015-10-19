@@ -40,6 +40,9 @@ func (receive *DHTNode) StartListenServer(){
 			runtime.Gosched()
 		}
 	}()
+	
+	go receive.StartHeartBeats()
+
 }
 
 //Decrypts a message received and calls the function that has 
@@ -91,6 +94,14 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		case message.Type == "INSERTNODEBEFOREME":
 		{
 			receive.receiveInsertNodeBeforeMe(message)
+		}
+		case message.Type == "HEARTBEAT":
+		{
+			receive.receiveHeartBeat(message)
+		}
+		case message.Type == "HEARTBEATANSWER":
+		{
+			receive.receiveHeartBeatAnswer(message)
 		}
 		default: 
 		{
@@ -167,4 +178,14 @@ func (receive *DHTNode) receiveUpdateFingerTablesAux(message Msg){
 func (receive *DHTNode) receiveInsertNodeBeforeMe(message Msg){
 	nodeToInsert := message.Source
 	receive.InsertNodeBeforeMe(nodeToInsert)
+}
+
+func (receive *DHTNode) receiveHeartBeat(message Msg){
+	idHeartBeat := message.Args["heartBeatId"]
+	receive.SendHeartBeatAnswer(message.Source,idHeartBeat)
+}
+
+func (receive *DHTNode) receiveHeartBeatAnswer(message Msg){
+	idHeartBeat,_ := strconv.Atoi(message.Args["heartBeatId"])
+	receive.HeartBeatRequest[idHeartBeat] <- message.Source
 }

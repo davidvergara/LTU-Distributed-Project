@@ -38,14 +38,15 @@ func task21(){
 // 		nodo2.SendPrintRing(&nodoAConectar)
  	}()
  	 	
- 	 	 	go func() {
+		go func() {
+		time.Sleep(1000 * time.Millisecond)
  		id2 := "07"
  		nodo2 := dht.MakeDHTNode(&id2,"localhost","1114")
  		nodo2.StartListenServer()
  		nodoAConectar := dht.NetworkNode{
- 			NodeId: "01",
+ 			NodeId: "02",
  			Ip: "localhost",
- 			Port: "1111"}
+ 			Port: "1112"}
  		nodo2.SendAddToRing(&nodoAConectar,nodo2.ToNetworkNode())
 // 		nodo2.SendPrintRing(&nodoAConectar)
  	}()
@@ -62,7 +63,7 @@ func task21(){
 // 		nodo2.SendPrintRing(&nodoAConectar)
  	}()
  	 	 	 	
- 	 	 	 	 	go func() {
+  	 	go func() {
  		id2 := "05"
  		nodo2 := dht.MakeDHTNode(&id2,"localhost","1116")
  		nodo2.StartListenServer()
@@ -86,7 +87,7 @@ func task21(){
 //// 		nodo2.SendPrintRing(&nodoAConectar)
 // 	}()
  	nodo1.PrintRing()
- 	time.Sleep(5000 * time.Millisecond)
+ 	time.Sleep(10000 * time.Millisecond)
  	nodo1.PrintRing()
  	time.Sleep(30000000000 * time.Millisecond)
 }
@@ -117,6 +118,6 @@ func task22(){
 
 //Main function
 func main() {
-	task22()
-	//task21()
+//	task22()
+	task21()
 }

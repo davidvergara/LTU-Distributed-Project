@@ -96,7 +96,7 @@ func (dhtNode *DHTNode) SendSetPredecessor(dest *NetworkNode, newPredecessor *Ne
 	Send(dest,mess)
 }
 
-//Sends to the destination a SETUCCESSOR message
+//Sends to the destination a SETSUCCESSOR message
 func (dhtNode *DHTNode) SendSetSuccessor(dest *NetworkNode, newSuccessor *NetworkNode){
 	mess := Msg{Source: newSuccessor,
 			Dest: dest,
@@ -167,3 +167,34 @@ func (dhtNode *DHTNode) SendInsertNodeBeforeMe (nodeResponsible *NetworkNode,nod
 				Args: nil}
 	Send(nodeResponsible,mess)
 }
+
+func (dhtNode *DHTNode) SendHeartBeat(dest *NetworkNode)chan *NetworkNode{
+
+	//fmt.Println("+Nodo " + dhtNode.nodeId + " sending heartbeat to " + dest.NodeId)
+	/* We need a channel to save the answer */
+	dhtNode.mutexNumHeartBeat.Lock()
+	numHeartBeat := strconv.Itoa(dhtNode.NumHeartBeat)
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+		Dest: dest,
+ 		Type: "HEARTBEAT", 
+ 		Args: map[string]string{"heartBeatId": numHeartBeat}}
+		
+	answerChannel:= make(chan *NetworkNode)
+	dhtNode.HeartBeatRequest[dhtNode.NumHeartBeat]=answerChannel
+	dhtNode.NumHeartBeat++
+	dhtNode.mutexNumHeartBeat.Unlock()
+	Send(dest, mess)
+	return answerChannel
+}
+
+func (dhtNode *DHTNode) SendHeartBeatAnswer(dest *NetworkNode, idHeartBeat string){
+
+	//fmt.Println("-Nodo " + dhtNode.nodeId + " answering heartbeat to " + dest.NodeId + " with answer " + dhtNode.Predecessor.NodeId)
+	mess := Msg{Source: dhtNode.Predecessor,
+			Dest: dest,
+	 		Type: "HEARTBEATANSWER", 
+	 		Args: map[string]string{
+	 				"heartBeatId":idHeartBeat}}
+		
+	Send(dest, mess)
+}	
