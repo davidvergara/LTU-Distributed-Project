@@ -16,6 +16,7 @@ type Msg struct {
 	Dest *NetworkNode
 	Type string
 	Args map[string]string
+	Data DataSet
 }
 
 //Converts a DHTNode in a NetworkNode, that can be sent

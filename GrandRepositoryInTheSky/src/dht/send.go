@@ -50,7 +50,8 @@ func (dhtNode *DHTNode) SendLookup(key string, dhtMinNode *NetworkNode,
  			Type: "LOOKUP", 
  			Args: map[string]string{
  					"key": string(key),
- 					"lookUpId": numLookupString}}
+ 					"lookUpId": numLookupString},
+ 			Data: DataSet{}}
 			
 		answerChannel:= make(chan *NetworkNode)
 		dhtNode.LookupRequest[dhtNode.NumLookup]=answerChannel
@@ -65,7 +66,8 @@ func (dhtNode *DHTNode) SendLookup(key string, dhtMinNode *NetworkNode,
  			Type: "LOOKUP", 
  			Args: map[string]string{
  					"key": string(key),
- 					"lookUpId": idLookup}}
+ 					"lookUpId": idLookup},
+ 			Data: DataSet{}}
 		Send(dhtMinNode, mess)
 		return nil
 	}
@@ -81,7 +83,8 @@ func (dhtNode *DHTNode) SendLookupAnswer(answerNode *NetworkNode, sourceNode *Ne
 			Dest: sourceNode,
 	 		Type: "LOOKUPANSWER", 
 	 		Args: map[string]string{
-	 				"lookUpId":idLookup}}
+	 				"lookUpId":idLookup},
+ 			Data: DataSet{}}
 		
 	Send(sourceNode, mess)
 }	
@@ -91,7 +94,8 @@ func (dhtNode *DHTNode) SendSetPredecessor(dest *NetworkNode, newPredecessor *Ne
 	mess := Msg{Source: newPredecessor,
 				Dest: dest,
 				Type: "SETPREDECESSOR",
-				Args: nil}
+				Args: nil,
+ 				Data: DataSet{}}
 	
 	Send(dest,mess)
 }
@@ -101,7 +105,8 @@ func (dhtNode *DHTNode) SendSetSuccessor(dest *NetworkNode, newSuccessor *Networ
 	mess := Msg{Source: newSuccessor,
 			Dest: dest,
 			Type: "SETSUCCESSOR",
-			Args: nil}
+			Args: nil,
+ 			Data: DataSet{}}
 	
 	Send(dest, mess)
 }
@@ -111,7 +116,8 @@ func (dhtNode *DHTNode) SendPrintRing(dest *NetworkNode){
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
 				Dest: dest,
 				Type: "PRINTRING",
-				Args: nil}
+				Args: nil,
+ 				Data: DataSet{}}
 	
 	Send(dest,mess)
 }
@@ -121,7 +127,8 @@ func (dhtNode *DHTNode) SendPrintRingAux(original *NetworkNode, dest *NetworkNod
 	mess := Msg{Source: original,
 				Dest: dest,
 				Type: "PRINTRINGAUX",
-				Args: nil}
+				Args: nil,
+ 				Data: DataSet{}}
 	
 	Send(dest,mess)
 }
@@ -132,7 +139,8 @@ func (dhtNode *DHTNode) SendAddToRing(dest *NetworkNode, newNode *NetworkNode){
 	mess := Msg{Source: newNode,
 				Dest: dest,
 				Type: "ADDTORING",
-				Args: nil}
+				Args: nil,
+ 				Data: DataSet{}}
 	
 	Send(dest,mess)
 }
@@ -142,7 +150,8 @@ func (dhtNode *DHTNode) SendUpdateFingerTables(dest *NetworkNode){
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
 				Dest: dest,
 				Type: "UPDATEFINGERTABLES",
-				Args: nil}
+				Args: nil,
+ 				Data: DataSet{}}
 	
 	Send(dest,mess)
 }
@@ -152,7 +161,8 @@ func (dhtNode *DHTNode) SendUpdateFingerTablesAux(original *NetworkNode, dest *N
 	mess := Msg{Source: original,
 				Dest: dest,
 				Type: "UPDATEFINGERTABLESAUX",
-				Args: nil}
+				Args: nil,
+ 				Data: DataSet{}}
 	
 	Send(dest,mess)
 }
@@ -164,7 +174,8 @@ func (dhtNode *DHTNode) SendInsertNodeBeforeMe (nodeResponsible *NetworkNode,nod
 	mess := Msg{Source: nodeToInsert,
 				Dest: nodeResponsible,
 				Type: "INSERTNODEBEFOREME",
-				Args: nil}
+				Args: nil,
+ 				Data: DataSet{}}
 	Send(nodeResponsible,mess)
 }
 
@@ -175,9 +186,10 @@ func (dhtNode *DHTNode) SendHeartBeat(dest *NetworkNode)chan *NetworkNode{
 	dhtNode.mutexNumHeartBeat.Lock()
 	numHeartBeat := strconv.Itoa(dhtNode.NumHeartBeat)
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
-		Dest: dest,
- 		Type: "HEARTBEAT", 
- 		Args: map[string]string{"heartBeatId": numHeartBeat}}
+			Dest: dest,
+ 			Type: "HEARTBEAT", 
+ 			Args: map[string]string{"heartBeatId": numHeartBeat},
+ 			Data: DataSet{}}
 		
 	answerChannel:= make(chan *NetworkNode)
 	dhtNode.HeartBeatRequest[dhtNode.NumHeartBeat]=answerChannel
@@ -194,7 +206,19 @@ func (dhtNode *DHTNode) SendHeartBeatAnswer(dest *NetworkNode, idHeartBeat strin
 			Dest: dest,
 	 		Type: "HEARTBEATANSWER", 
 	 		Args: map[string]string{
-	 				"heartBeatId":idHeartBeat}}
+	 				"heartBeatId":idHeartBeat},
+ 			Data: DataSet{}}
 		
 	Send(dest, mess)
-}	
+}
+
+func (dhtNode *DHTNode) SendSetData(dest *NetworkNode, datasetToSend DataSet){
+	
+		mess := Msg{Source: dhtNode.ToNetworkNode(),
+			Dest: dest,
+	 		Type: "SETDATA", 
+	 		Args: nil,
+ 			Data: datasetToSend} 
+		
+		Send(dest,mess)
+}

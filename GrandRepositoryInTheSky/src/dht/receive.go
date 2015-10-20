@@ -103,6 +103,10 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		{
 			receive.receiveHeartBeatAnswer(message)
 		}
+		case message.Type == "SETDATA":
+		{
+			receive.receiveSetData(message)
+		}
 		default: 
 		{
 			fmt.Println("Wrong message")
@@ -188,4 +192,11 @@ func (receive *DHTNode) receiveHeartBeat(message Msg){
 func (receive *DHTNode) receiveHeartBeatAnswer(message Msg){
 	idHeartBeat,_ := strconv.Atoi(message.Args["heartBeatId"])
 	receive.HeartBeatRequest[idHeartBeat] <- message.Source
+}
+
+func (receive *DHTNode) receiveSetData(message Msg){
+	dataToInsert := message.Data
+	for k,v := range dataToInsert.DataStored{
+		receive.Data.storeData(k,v.Value,v.Node)
+	}
 }

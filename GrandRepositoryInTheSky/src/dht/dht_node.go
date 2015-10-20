@@ -29,12 +29,15 @@ type DHTNode struct {
 	PredOfPred		*NetworkNode	
 	contact			Contact
 	fingers			[]*Finger
+	Data			DataSet
 	
+	/* */
 	NumLookup int
 	LookupRequest 	map[int]chan *NetworkNode
 	NumHeartBeat int
 	HeartBeatRequest map[int]chan *NetworkNode
 	
+	/* Mutex part */
 	mutexNumLookup  sync.Mutex
 	mutexNumHeartBeat sync.Mutex
 	mutexPredeccessor  sync.Mutex
@@ -73,6 +76,8 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	//dhtNode.LookupRequest= make map[int]chan *NetworkNode
 
 	//var LookupRequest 	map[int]chan *NetworkNode
+	
+	dhtNode.Data = MakeDataSet()
 
 	dhtNode.LookupRequest = make(map[int]chan *NetworkNode)
 	dhtNode.HeartBeatRequest = make(map[int]chan *NetworkNode)
