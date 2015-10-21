@@ -222,3 +222,46 @@ func (dhtNode *DHTNode) SendSetData(dest *NetworkNode, datasetToSend DataSet){
 		
 		Send(dest,mess)
 }
+
+func (dhtNode *DHTNode) SendGetData(typeData string, dest *NetworkNode)chan DataSet{
+
+	/* We need a channel to save the answer */
+	dhtNode.mutexNumGetData.Lock()
+	numGetData:= strconv.Itoa(dhtNode.NumGetData)
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+			Dest: dest,
+ 			Type: "GETDATA", 
+ 			Args: map[string]string{"getDataId": numGetData,
+ 									"requestType": typeData},
+ 			Data: DataSet{}}
+		
+	answerChannel:= make(chan DataSet)
+	dhtNode.GetDataRequest[dhtNode.NumGetData] =  answerChannel
+	dhtNode.NumGetData++
+	dhtNode.mutexNumGetData.Unlock()
+	Send(dest, mess)
+	return answerChannel
+}
+
+func (dhtNode *DHTNode) SendGetDataAnswer(dest *NetworkNode, dataSet DataSet, dataId string){
+
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+			Dest: dest,
+	 		Type: "GETDATAANSWER", 
+	 		Args: map[string]string{
+	 				"getDataId":dataId},
+ 			Data: dataSet}
+		
+	Send(dest, mess)
+}	
+
+func (dhtNode *DHTNode) SendDeleteData(dest *NetworkNode, datasetToSend DataSet){
+	
+		mess := Msg{Source: dhtNode.ToNetworkNode(),
+			Dest: dest,
+	 		Type: "DELETEDATA", 
+	 		Args: nil,
+ 			Data: datasetToSend} 
+		
+		Send(dest,mess)
+}

@@ -11,11 +11,11 @@ type DataSet struct {
 
 type Data struct {
 	Value string
-	Node string
+	Original bool
 }
 
 
-func (dataSet DataSet) storeData(key string, value string, nodeId string) bool{
+func (dataSet DataSet) storeData(key string, value string, original bool) bool{
 	_,is := dataSet.DataStored[key]
 	
 	if is {
@@ -24,7 +24,7 @@ func (dataSet DataSet) storeData(key string, value string, nodeId string) bool{
 		return false
 	} else{
 		dataSet.DataStored[key] = Data{Value : value,
-										Node : nodeId}
+										Original : original}
 		return true
 	}
 }
@@ -44,19 +44,31 @@ func (dataSet DataSet) deleteData(key string) bool{
 	}
 }
 
-func (dataSet DataSet) getData(key string) Data{
+func (dataSet DataSet) getData(key string) (Data, bool){
 	data,is := dataSet.DataStored[key]
 	
 	if is {
 		
 		/* Data can be got */
-		return data
+		return data, true
 	} else{
 		
 		/* Data is not stored */
 		fmt.Println("Error: data with key \"" + key + "\"can't be found")
-		return Data{"","ERROR"}
+		return Data{"",false}, false
 	}
+}
+
+func (dataSet DataSet) changeReplicaOriginal(key string){
+	oldData,_ :=dataSet.getData(key)
+	dataSet.deleteData(key) 
+	dataSet.storeData(key, oldData.Value, true)
+}
+
+func (dataSet DataSet) changeOriginalReplica(key string){
+	oldData,_ :=dataSet.getData(key)
+	dataSet.deleteData(key) 
+	dataSet.storeData(key, oldData.Value, false)
 }
 
 func (dataSet DataSet) getStoredData(key string) map[string]Data{

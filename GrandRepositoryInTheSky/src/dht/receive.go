@@ -42,7 +42,8 @@ func (receive *DHTNode) StartListenServer(){
 	}()
 	
 	go receive.StartHeartBeats()
-
+	go receive.StartReplicateRoutine()
+	go receive.StartUnreplicateRoutine()
 }
 
 //Decrypts a message received and calls the function that has 
@@ -106,6 +107,18 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		case message.Type == "SETDATA":
 		{
 			receive.receiveSetData(message)
+		}
+		case message.Type == "GETDATA":
+		{
+			receive.receiveGetData(message)
+		}
+		case message.Type == "GETDATAANSWER":
+		{
+			receive.receiveGetDataAnswer(message)
+		}
+		case message.Type == "DELETEDATA":
+		{
+			receive.receiveDeleteData(message)
 		}
 		default: 
 		{
@@ -197,6 +210,30 @@ func (receive *DHTNode) receiveHeartBeatAnswer(message Msg){
 func (receive *DHTNode) receiveSetData(message Msg){
 	dataToInsert := message.Data
 	for k,v := range dataToInsert.DataStored{
-		receive.Data.storeData(k,v.Value,v.Node)
+		receive.Data.storeData(k,v.Value,v.Original)
+	}
+}
+
+func (receive *DHTNode) receiveGetData(message Msg){
+	if message.Args["requestType"]=="original"{
+		dataSetToBeSend :=MakeDataSet()
+		for k,v := range  receive.Data.DataStored{
+			if v.Original {
+				dataSetToBeSend.storeData(k,v.Value,false)
+			}
+		}
+		receive.SendGetDataAnswer(message.Source,dataSetToBeSend,message.Args["getDataId"])
+	}
+}
+
+func (receive *DHTNode) receiveGetDataAnswer (message Msg){
+	idGetData,_ := strconv.Atoi(message.Args["getDataId"])
+	receive.GetDataRequest[idGetData] <- message.Data
+}
+
+func (receive *DHTNode) receiveDeleteData(message Msg){
+	dataToDelete := message.Data
+	for k,_ := range dataToDelete.DataStored{
+		receive.Data.deleteData(k)
 	}
 }

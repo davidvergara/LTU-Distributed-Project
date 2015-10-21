@@ -14,6 +14,9 @@ const SPACESIZE = 3
 
 const HEARTBEATPERIOD = time.Second * 5
 const HEARTBEATEXPIRATION = time.Second * 2
+const GETDATAEXPIRATION = time.Second * 2
+const REPLICATEPERIOD = time.Second * 10
+const UNREPLICATEPERIOD = time.Second *10
 
 /* Contact struct */
 type Contact struct {
@@ -36,6 +39,8 @@ type DHTNode struct {
 	LookupRequest 	map[int]chan *NetworkNode
 	NumHeartBeat int
 	HeartBeatRequest map[int]chan *NetworkNode
+	NumGetData int
+	GetDataRequest map[int]chan DataSet
 	
 	/* Mutex part */
 	mutexNumLookup  sync.Mutex
@@ -43,6 +48,7 @@ type DHTNode struct {
 	mutexPredeccessor  sync.Mutex
 	mutexSuccessor  sync.Mutex
 	mutexPredOfPred	sync.Mutex
+	mutexNumGetData sync.Mutex
 }
 
 /* Finger struct */
@@ -73,6 +79,7 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	
 	dhtNode.NumLookup=0
 	dhtNode.NumHeartBeat=0
+	dhtNode.NumGetData=0
 	//dhtNode.LookupRequest= make map[int]chan *NetworkNode
 
 	//var LookupRequest 	map[int]chan *NetworkNode
@@ -81,6 +88,7 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 
 	dhtNode.LookupRequest = make(map[int]chan *NetworkNode)
 	dhtNode.HeartBeatRequest = make(map[int]chan *NetworkNode)
+	dhtNode.GetDataRequest = make(map[int]chan DataSet)
 	
 	return dhtNode
 }
@@ -134,6 +142,7 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 		fmt.Println("Error, tried to add a nodeId that is already in the ring: "+newNode.NodeId)
 		
 	} else {
+		
 		if(dhtNode.Predecessor == nil){
 			
 			/* First node in the ring */
@@ -142,6 +151,10 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 			dhtNode.Predecessor = newNode
 			dhtNode.Successor = newNode
 			dhtNode.updateFingerTables()
+			
+			/* Send data corresponding to new node */
+			dhtNode.UpdateAndSendData(newNode, true)
+			
 		} else{
 			
 			valueNodePredecessor,_ := hex.DecodeString(dhtNode.Predecessor.NodeId)
@@ -157,6 +170,9 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 				dhtNode.SendSetSuccessor(dhtNode.Predecessor, newNode)
 				dhtNode.Predecessor = newNode
 				dhtNode.updateFingerTables()
+				
+				/* Send data corresponding to new node */
+				dhtNode.UpdateAndSendData(newNode, false)
 			} else{
 				/* This is not the right place anymore -> we have to find it out again */
 				dhtNode.AddToRing(newNode)
@@ -164,6 +180,33 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 		}
 	}
 	dhtNode.mutexPredeccessor.Unlock()
+}
+
+func (dhtNode *DHTNode) UpdateAndSendData(newNode *NetworkNode, onlyOneNode bool){
+	/* Send data corresponding to new node */
+	dataSetToBeSend :=MakeDataSet()
+	dataToBeDeleted :=MakeDataSet()
+	for k,v := range dhtNode.Data.DataStored{
+		if !v.Original {
+			dataSetToBeSend.storeData(k,v.Value,false)
+			dhtNode.Data.deleteData(k)
+			if !onlyOneNode {
+				dataToBeDeleted.storeData(k,v.Value,false)
+			}
+		}
+	}
+	if !onlyOneNode {
+		dhtNode.SendDeleteData(dhtNode.Successor,dataToBeDeleted)
+	}
+	for k,v := range dhtNode.Data.DataStored{
+		if v.Original {
+			if k <= newNode.NodeId {
+				dataSetToBeSend.storeData(k,v.Value,true)
+				dhtNode.Data.changeOriginalReplica(k)						
+			}
+		}
+	}
+	dhtNode.SendSetData(newNode,dataSetToBeSend)
 }
 
 //Update the finger table of all the nodes in the ring
@@ -455,16 +498,85 @@ func (dhtNode *DHTNode) DeadPredecessor(){
 		dhtNode.Successor = nil
 		dhtNode.Predecessor = nil
 		dhtNode.PredOfPred = nil
+		
+		/* Changing my replicas to data */
+		for k,v := range dhtNode.Data.DataStored{
+			if !v.Original {
+				dhtNode.Data.changeReplicaOriginal(k)
+			}
+		}
 	} else{
 		
 		/* There are more nodes in the ring */
-		dhtNode.SendSetSuccessor(dhtNode.PredOfPred,dhtNode.ToNetworkNode())
 		dhtNode.Predecessor = dhtNode.PredOfPred
+		dhtNode.SendSetSuccessor(dhtNode.Predecessor,dhtNode.ToNetworkNode())
 		dhtNode.PredOfPred = nil
+		
+		/* Changing my replicas to data from the node
+		   and send them as replicas to the successor */
+		dataSetToBeSend :=MakeDataSet()
+		for k,v := range dhtNode.Data.DataStored{
+			if !v.Original {
+				dhtNode.Data.changeReplicaOriginal(k)
+				dataSetToBeSend.storeData(k,v.Value,false)
+			}
+		}
+		dhtNode.SendSetData(dhtNode.Successor,dataSetToBeSend)
+		
+		/* Ask the predecessor for its original data */
+		c:=dhtNode.SendGetData("original",dhtNode.Predecessor)
+		select {
+				case answer := <- c:
+				{	
+					/* Data received, storing... */
+					for k,v := range answer.DataStored{
+						dhtNode.Data.storeData(k,v.Value,false)
+					}
+				}	
+				case <-time.After(GETDATAEXPIRATION):
+				{
+					
+					/* Expiration time */
+					fmt.Println("ERROR: Predecessor does not answer...")
+				}					
+		}
 	}
 	dhtNode.updateFingerTables()
 	dhtNode.mutexPredeccessor.Unlock()
-	
+}
+
+func (dhtNode *DHTNode) StartReplicateRoutine(){
+	for {
+		time.Sleep(REPLICATEPERIOD)
+		if dhtNode.Successor != nil {
+			dataSetToBeSend :=MakeDataSet()
+			for k,v := range dhtNode.Data.DataStored{
+				if v.Original {
+					dataSetToBeSend.storeData(k,v.Value,false)
+				}
+			}
+			dhtNode.SendSetData(dhtNode.Successor,dataSetToBeSend)
+		}
+	}
+}
+
+func (dhtNode *DHTNode) StartUnreplicateRoutine(){
+	for {
+		time.Sleep(UNREPLICATEPERIOD)
+		if dhtNode.Predecessor != nil && dhtNode.PredOfPred != nil {
+			dataSetToBeSend :=MakeDataSet()
+			for k,v := range dhtNode.Data.DataStored{
+				if !v.Original {
+					if k <= dhtNode.Predecessor.NodeId && k <= dhtNode.PredOfPred.NodeId {
+						
+						/* Data replicated more than once */
+						dhtNode.Data.deleteData(k)
+					}
+				}
+			}
+			dhtNode.SendSetData(dhtNode.Successor,dataSetToBeSend)
+		}
+	}
 }
 
 func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {
