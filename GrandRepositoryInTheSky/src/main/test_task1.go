@@ -122,9 +122,9 @@ func task22(){
 
 //Main function
 func main() {
-	task31()
+//	task31()
 //	task22()
-//	task21()
+	task21()
 }
 
 func task31(){
