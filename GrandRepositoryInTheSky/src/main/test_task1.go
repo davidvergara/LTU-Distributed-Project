@@ -122,9 +122,9 @@ func task22(){
 
 //Main function
 func main() {
-//	task31()
+	task31()
 //	task22()
-	task21()
+//	task21()
 }
 
 func task31(){
@@ -156,7 +156,11 @@ func task31(){
 		dataSetToBeSend.StoreData(os.Args[3],"0",true)
 		dataSetToBeSend.StoreData(os.Args[4],"1",true)
 		dataSetToBeSend.StoreData(os.Args[5],"2",true)
+		fmt.Println("Enviando Datos")
 		dht.SendDataToRingForeign("localhost", port,dataSetToBeSend)
+		for {
+    		runtime.Gosched()
+		}
 	} else{
 		id := os.Args[4]
 		portToConnect := os.Args[3]

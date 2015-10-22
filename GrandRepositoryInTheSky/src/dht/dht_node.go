@@ -191,21 +191,35 @@ func (dhtNode *DHTNode) UpdateAndSendData(newNode *NetworkNode, onlyOneNode bool
 		if !v.Original {
 			dataSetToBeSend.StoreData(k,v.Value,false)
 			dhtNode.Data.deleteData(k)
-			if !onlyOneNode {
-				dataToBeDeleted.StoreData(k,v.Value,false)
+		
+		}
+	}
+	
+	newNodeValue,_ := hex.DecodeString(newNode.NodeId)
+	actualNodeValue,_ := hex.DecodeString(dhtNode.nodeId)
+	
+	for k,v := range dhtNode.Data.DataStored{
+		if v.Original {
+			kValue,_ := hex.DecodeString(k)
+			if k != dhtNode.nodeId{
+				if k == newNode.NodeId {
+					dataSetToBeSend.StoreData(k,v.Value,true)
+					dhtNode.Data.changeOriginalReplica(k)
+					if !onlyOneNode {
+						dataToBeDeleted.StoreData(k,v.Value,false)
+					}						
+				} else if !between(newNodeValue, actualNodeValue, kValue){
+					dataSetToBeSend.StoreData(k,v.Value,true)
+					dhtNode.Data.changeOriginalReplica(k)
+					if !onlyOneNode {
+						dataToBeDeleted.StoreData(k,v.Value,false)
+					}		
+				}
 			}
 		}
 	}
 	if !onlyOneNode {
 		dhtNode.SendDeleteData(dhtNode.Successor,dataToBeDeleted)
-	}
-	for k,v := range dhtNode.Data.DataStored{
-		if v.Original {
-			if k <= newNode.NodeId {
-				dataSetToBeSend.StoreData(k,v.Value,true)
-				dhtNode.Data.changeOriginalReplica(k)						
-			}
-		}
 	}
 	dhtNode.SendSetData(newNode,dataSetToBeSend)
 }
@@ -361,9 +375,9 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 func (dhtNode *DHTNode) PrintRing(){
 	ring := fmt.Sprintln("Printing ring...")
 	
-	data := "Data: "
+	data := "Data: " + "\n"
 	for k,v := range dhtNode.Data.DataStored{
-		data = data + k + " " + v.Value + " " + strconv.FormatBool(v.Original)
+		data = data + k + " " + v.Value + " " + strconv.FormatBool(v.Original) + "\n"
 	}
 	
 	
@@ -378,6 +392,7 @@ func (dhtNode *DHTNode) PrintRing(){
 //			fmt.Println("-PredOfPred: " + dhtNode.PredOfPred.NodeId)
 //		}
 		/* More than one node in the ring */
+		
 		dhtNode.SendPrintRingAux(dhtNode.ToNetworkNode(), dhtNode.GetSuccessor(), ring)
 	} else{
 		fmt.Println(ring)
@@ -388,9 +403,12 @@ func (dhtNode *DHTNode) PrintRing(){
 //printRingAux to my successor
 func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode, ring string){
 	if dhtNode.GetNodeId() != original.NodeId {
-		
+			data := "Data: " + "\n"
+			for k,v := range dhtNode.Data.DataStored{
+				data = data + k + " " + v.Value + " " + strconv.FormatBool(v.Original) + "\n"
+			}
 		/* Not printed all the ring */
-		ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort())
+		ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort()) + fmt.Sprintln(data)
 //		fmt.Println("-Predecessor: " + dhtNode.Predecessor.NodeId)
 //		fmt.Println("-Successor: " + dhtNode.Successor.NodeId)
 //		
@@ -579,7 +597,11 @@ func (dhtNode *DHTNode) StartUnreplicateRoutine(){
 			dataSetToBeSend :=MakeDataSet()
 			for k,v := range dhtNode.Data.DataStored{
 				if !v.Original {
-					if k <= dhtNode.Predecessor.NodeId && k <= dhtNode.PredOfPred.NodeId {
+					valuePred,_ :=hex.DecodeString(dhtNode.Predecessor.NodeId)
+					valuePredOfPred,_ := hex.DecodeString(dhtNode.PredOfPred.NodeId)
+					valueK,_ := hex.DecodeString(k)
+//					if k <= dhtNode.Predecessor.NodeId && k <= dhtNode.PredOfPred.NodeId {
+					if between(valuePredOfPred,valuePred,valueK){
 						
 						/* Data replicated more than once */
 						dhtNode.Data.deleteData(k)

@@ -180,7 +180,7 @@ func SendDataToRingForeign(destIP string, destPort string,data DataSet){
 				Type: "ADDDATA",
 				Args: nil,
  				Data: data}
-	
+	fmt.Println("Enviamos")
 	Send(auxNetwork,mess)
 }
 

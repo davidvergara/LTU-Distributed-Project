@@ -70,7 +70,7 @@ func (receive *DHTNode) StartListenServer(){
 	
 	go receive.StartHeartBeats()
 	go receive.StartReplicateRoutine()
-	go receive.StartUnreplicateRoutine()
+//	go receive.StartUnreplicateRoutine()
 }
 
 //Decrypts a message received and calls the function that has 
@@ -271,6 +271,7 @@ func (receive *DHTNode) receiveDeleteData(message Msg){
 }
 
 func (receive *DHTNode) receiveAddData(message Msg){
+	fmt.Println("Han llegado los datos")
 	for k,v := range message.Data.DataStored{
 		dataSetToBeSend :=MakeDataSet()
 		nodeResponsible:=receive.Lookup(k,receive.ToNetworkNode(),"")
