@@ -170,6 +170,20 @@ func SendAddToRingForeign(destIP string, destPort string, newNode *NetworkNode){
 	Send(auxNetwork,mess)
 }
 
+func SendDataToRingForeign(destIP string, destPort string,data DataSet){
+	auxNetwork := new(NetworkNode)
+	auxNetwork.Ip = destIP
+	auxNetwork.Port = destPort
+	auxNetwork.NodeId = ""
+	mess := Msg{Source: new(NetworkNode),
+				Dest: auxNetwork,
+				Type: "ADDDATA",
+				Args: nil,
+ 				Data: data}
+	
+	Send(auxNetwork,mess)
+}
+
 //Sends to the destination a UPDATEFINGERTABLES message (starting updating fingers)
 func (dhtNode *DHTNode) SendUpdateFingerTables(dest *NetworkNode){
 	mess := Msg{Source: dhtNode.ToNetworkNode(),

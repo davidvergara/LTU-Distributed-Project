@@ -15,7 +15,7 @@ type Data struct {
 }
 
 
-func (dataSet DataSet) storeData(key string, value string, original bool) bool{
+func (dataSet DataSet) StoreData(key string, value string, original bool) bool{
 	_,is := dataSet.DataStored[key]
 	
 	if is {
@@ -62,13 +62,13 @@ func (dataSet DataSet) getData(key string) (Data, bool){
 func (dataSet DataSet) changeReplicaOriginal(key string){
 	oldData,_ :=dataSet.getData(key)
 	dataSet.deleteData(key) 
-	dataSet.storeData(key, oldData.Value, true)
+	dataSet.StoreData(key, oldData.Value, true)
 }
 
 func (dataSet DataSet) changeOriginalReplica(key string){
 	oldData,_ :=dataSet.getData(key)
 	dataSet.deleteData(key) 
-	dataSet.storeData(key, oldData.Value, false)
+	dataSet.StoreData(key, oldData.Value, false)
 }
 
 func (dataSet DataSet) getStoredData(key string) map[string]Data{

@@ -147,6 +147,10 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		{
 			receive.receiveDeleteData(message)
 		}
+		case message.Type == "ADDDATA":
+		{
+			receive.receiveAddData(message)
+		}
 		default: 
 		{
 			fmt.Println("Wrong message")
@@ -238,7 +242,7 @@ func (receive *DHTNode) receiveHeartBeatAnswer(message Msg){
 func (receive *DHTNode) receiveSetData(message Msg){
 	dataToInsert := message.Data
 	for k,v := range dataToInsert.DataStored{
-		receive.Data.storeData(k,v.Value,v.Original)
+		receive.Data.StoreData(k,v.Value,v.Original)
 	}
 }
 
@@ -247,7 +251,7 @@ func (receive *DHTNode) receiveGetData(message Msg){
 		dataSetToBeSend :=MakeDataSet()
 		for k,v := range  receive.Data.DataStored{
 			if v.Original {
-				dataSetToBeSend.storeData(k,v.Value,false)
+				dataSetToBeSend.StoreData(k,v.Value,false)
 			}
 		}
 		receive.SendGetDataAnswer(message.Source,dataSetToBeSend,message.Args["getDataId"])
@@ -263,5 +267,14 @@ func (receive *DHTNode) receiveDeleteData(message Msg){
 	dataToDelete := message.Data
 	for k,_ := range dataToDelete.DataStored{
 		receive.Data.deleteData(k)
+	}
+}
+
+func (receive *DHTNode) receiveAddData(message Msg){
+	for k,v := range message.Data.DataStored{
+		dataSetToBeSend :=MakeDataSet()
+		nodeResponsible:=receive.Lookup(k,receive.ToNetworkNode(),"")
+		dataSetToBeSend.StoreData(k,v.Value,true)
+		receive.SendSetData(nodeResponsible, dataSetToBeSend)
 	}
 }
