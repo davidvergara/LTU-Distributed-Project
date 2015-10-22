@@ -132,7 +132,7 @@ func task31(){
 	port := os.Args[2]
 	if typeNode == "initial" {
 		fmt.Println("Creando nodo inicial con puerto " + port)
-		node0b := dht.MakeDHTNode(nil, "localhost", port)
+		node0b := dht.MakeDHTNode(&os.Args[3], "localhost", port)
  		node0b.StartListenServer()
  		for {
     		runtime.Gosched()
@@ -140,12 +140,20 @@ func task31(){
 	} else if typeNode == "connect" {
 		portToConnect := os.Args[3]
 		fmt.Println("Conectando nodo con puerto " + port + " al anillo " + portToConnect)
-		node0b := dht.MakeDHTNode(nil, "localhost", port)
+		node0b := dht.MakeDHTNode(&os.Args[4], "localhost", port)
 		node0b.StartListenServer()
 		dht.SendAddToRingForeign("localhost",portToConnect,node0b.ToNetworkNode())
 		for {
     		runtime.Gosched()
 		}
+	} else if typeNode == "addData" {
+		fmt.Println("Enviando datos al nodo con puerto " + port)
+		
+		dataSetToBeSend :=dht.MakeDataSet()
+		dataSetToBeSend.StoreData(os.Args[3],"0",true)
+		dataSetToBeSend.StoreData(os.Args[4],"1",true)
+		dataSetToBeSend.StoreData(os.Args[5],"2",true)
+		dht.SendDataToRingForeign("localhost", port,dataSetToBeSend)
 	} else{
 		portToConnect := os.Args[3]
 		fmt.Println("Conectando nodo con puerto " + port + " al anillo " + portToConnect)

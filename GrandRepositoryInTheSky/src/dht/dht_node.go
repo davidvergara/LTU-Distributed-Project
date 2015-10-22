@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"sync"
 	"time"
+	"strconv"
 )
 
 /* Consts */
@@ -188,10 +189,10 @@ func (dhtNode *DHTNode) UpdateAndSendData(newNode *NetworkNode, onlyOneNode bool
 	dataToBeDeleted :=MakeDataSet()
 	for k,v := range dhtNode.Data.DataStored{
 		if !v.Original {
-			dataSetToBeSend.storeData(k,v.Value,false)
+			dataSetToBeSend.StoreData(k,v.Value,false)
 			dhtNode.Data.deleteData(k)
 			if !onlyOneNode {
-				dataToBeDeleted.storeData(k,v.Value,false)
+				dataToBeDeleted.StoreData(k,v.Value,false)
 			}
 		}
 	}
@@ -201,7 +202,7 @@ func (dhtNode *DHTNode) UpdateAndSendData(newNode *NetworkNode, onlyOneNode bool
 	for k,v := range dhtNode.Data.DataStored{
 		if v.Original {
 			if k <= newNode.NodeId {
-				dataSetToBeSend.storeData(k,v.Value,true)
+				dataSetToBeSend.StoreData(k,v.Value,true)
 				dhtNode.Data.changeOriginalReplica(k)						
 			}
 		}
@@ -359,7 +360,15 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 //Prints myself and sends printRingAux message to my successor
 func (dhtNode *DHTNode) PrintRing(){
 	ring := fmt.Sprintln("Printing ring...")
-	ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort())
+	
+	data := "Data: "
+	for k,v := range dhtNode.Data.DataStored{
+		data = data + k + " " + v.Value + " " + strconv.FormatBool(v.Original)
+	}
+	
+	
+	ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort()) + fmt.Sprintln(data)
+	
 	//dhtNode.PrintFingerTable()
 	if dhtNode.GetSuccessor() != nil {
 //		fmt.Println("-Predecessor: " + dhtNode.Predecessor.NodeId)
@@ -521,7 +530,7 @@ func (dhtNode *DHTNode) DeadPredecessor(){
 		for k,v := range dhtNode.Data.DataStored{
 			if !v.Original {
 				dhtNode.Data.changeReplicaOriginal(k)
-				dataSetToBeSend.storeData(k,v.Value,false)
+				dataSetToBeSend.StoreData(k,v.Value,false)
 			}
 		}
 		dhtNode.SendSetData(dhtNode.Successor,dataSetToBeSend)
@@ -533,7 +542,7 @@ func (dhtNode *DHTNode) DeadPredecessor(){
 				{	
 					/* Data received, storing... */
 					for k,v := range answer.DataStored{
-						dhtNode.Data.storeData(k,v.Value,false)
+						dhtNode.Data.StoreData(k,v.Value,false)
 					}
 				}	
 				case <-time.After(GETDATAEXPIRATION):
@@ -555,7 +564,7 @@ func (dhtNode *DHTNode) StartReplicateRoutine(){
 			dataSetToBeSend :=MakeDataSet()
 			for k,v := range dhtNode.Data.DataStored{
 				if v.Original {
-					dataSetToBeSend.storeData(k,v.Value,false)
+					dataSetToBeSend.StoreData(k,v.Value,false)
 				}
 			}
 			dhtNode.SendSetData(dhtNode.Successor,dataSetToBeSend)
