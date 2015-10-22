@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"encoding/json"
 	"strconv"
+//	"time"
 )
 
 //Starts a go function that will be receiving messages
@@ -25,20 +26,46 @@ func (receive *DHTNode) StartListenServer(){
 	
 	go func() {
 		
-		for {
-			
-			buffer :=make([]byte,1024) 
-			readed, err := conn.Read(buffer)
-			if err != nil {
-				fmt.Println("de")
-				panic(err)
-			}
-
-			message := buffer[0:readed]
-
-			go receive.decryptMessage(message)
-			runtime.Gosched()
-		}
+//		if receive.GetPort() == "1200" {
+//			tick := time.Tick(40000 * time.Millisecond)
+//			fmt.Println("Entering")
+//
+//			for {
+//				fmt.Println("hey")
+//				
+//				buffer :=make([]byte,1024) 
+//				readed, err := conn.Read(buffer)
+//				if err != nil {
+//					panic(err)
+//				}
+//	
+//				message := buffer[0:readed]
+//	
+//				go receive.decryptMessage(message)
+//				runtime.Gosched()
+//				select{
+//					case <- tick: 
+//					fmt.Println("pam")
+//					break;
+//	//				case default 
+//				}
+//				fmt.Println("no nos hemos cargado el bucle")
+//			} 
+//		} else {
+			for {
+				
+				buffer :=make([]byte,1024) 
+				readed, err := conn.Read(buffer)
+				if err != nil {
+					panic(err)
+				}
+	
+				message := buffer[0:readed]
+	
+				go receive.decryptMessage(message)
+				runtime.Gosched()
+			} 
+//		}
 	}()
 	
 	go receive.StartHeartBeats()
@@ -165,7 +192,8 @@ func (receive *DHTNode) receivePrintRing(message Msg){
 //Calling PrintRingAux function to print the ring
 func (receive *DHTNode) receivePrintRingAux(message Msg){
 	origin := message.Source
-	receive.PrintRingAux(origin)
+	ring := message.Args["ring"]
+	receive.PrintRingAux(origin,ring)
 }
 
 //Received message "ADDTORING"

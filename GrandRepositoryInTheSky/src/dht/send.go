@@ -3,12 +3,16 @@ package dht
 import (
 	"net"
 	"encoding/json"
-//	"fmt"
+	"fmt"
 	"strconv"
 )
 
 //Set an UDP connection with the node passed as parameter
 func SetConnection(dest *NetworkNode) *net.UDPConn {
+//	fmt.Println("Hola")
+//	if dest == nil {
+//		fmt.Println("dest es null")
+//	}
 	addr, err := net.ResolveUDPAddr("udp", dest.Ip+":"+dest.Port)
 	if err != nil {
 		panic(err)
@@ -23,6 +27,12 @@ func SetConnection(dest *NetworkNode) *net.UDPConn {
 
 //Sends the message passed as parameter to the destination
 func Send(dest *NetworkNode, message Msg) {
+	
+	if dest == nil {
+		fmt.Println(message.Source.NodeId)
+		fmt.Println(message.Type)
+//		fmt.Println(message.Args)
+	}
 	conn := SetConnection(dest)
 
 	go func() {
@@ -123,11 +133,12 @@ func (dhtNode *DHTNode) SendPrintRing(dest *NetworkNode){
 }
 
 //Sends to the destination a PRINTRINGAUX message (continuing printing ring)
-func (dhtNode *DHTNode) SendPrintRingAux(original *NetworkNode, dest *NetworkNode){
+func (dhtNode *DHTNode) SendPrintRingAux(original *NetworkNode, dest *NetworkNode, ring string){
 	mess := Msg{Source: original,
 				Dest: dest,
 				Type: "PRINTRINGAUX",
-				Args: nil,
+				Args:  map[string]string{
+	 				"ring":ring},
  				Data: DataSet{}}
 	
 	Send(dest,mess)
@@ -145,6 +156,20 @@ func (dhtNode *DHTNode) SendAddToRing(dest *NetworkNode, newNode *NetworkNode){
 	Send(dest,mess)
 }
 
+func SendAddToRingForeign(destIP string, destPort string, newNode *NetworkNode){
+	auxNetwork := new(NetworkNode)
+	auxNetwork.Ip = destIP
+	auxNetwork.Port = destPort
+	auxNetwork.NodeId = ""
+	mess := Msg{Source: newNode,
+				Dest: auxNetwork,
+				Type: "ADDTORING",
+				Args: nil,
+ 				Data: DataSet{}}
+	
+	Send(auxNetwork,mess)
+}
+
 //Sends to the destination a UPDATEFINGERTABLES message (starting updating fingers)
 func (dhtNode *DHTNode) SendUpdateFingerTables(dest *NetworkNode){
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
@@ -158,13 +183,15 @@ func (dhtNode *DHTNode) SendUpdateFingerTables(dest *NetworkNode){
 
 //Sends to the destination a UPDATEFINGERTABLESAUX message (continuing updating finger)
 func (dhtNode *DHTNode) SendUpdateFingerTablesAux(original *NetworkNode, dest *NetworkNode){
-	mess := Msg{Source: original,
-				Dest: dest,
-				Type: "UPDATEFINGERTABLESAUX",
-				Args: nil,
- 				Data: DataSet{}}
-	
-	Send(dest,mess)
+	if dest != nil {
+		mess := Msg{Source: original,
+					Dest: dest,
+					Type: "UPDATEFINGERTABLESAUX",
+					Args: nil,
+	 				Data: DataSet{}}
+		
+		Send(dest,mess)
+	}
 }
 
 //Sends to the destination a SENDINSERTNODEBEFOREME message
@@ -195,6 +222,9 @@ func (dhtNode *DHTNode) SendHeartBeat(dest *NetworkNode)chan *NetworkNode{
 	dhtNode.HeartBeatRequest[dhtNode.NumHeartBeat]=answerChannel
 	dhtNode.NumHeartBeat++
 	dhtNode.mutexNumHeartBeat.Unlock()
+	if dhtNode.GetPort() == "1201"{
+		fmt.Println("Enviando latido a... " + dhtNode.Predecessor.Port)
+	}
 	Send(dest, mess)
 	return answerChannel
 }

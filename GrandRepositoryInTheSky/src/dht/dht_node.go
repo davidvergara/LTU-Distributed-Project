@@ -13,10 +13,10 @@ import (
 const SPACESIZE = 3
 
 const HEARTBEATPERIOD = time.Second * 5
-const HEARTBEATEXPIRATION = time.Second * 2
-const GETDATAEXPIRATION = time.Second * 2
-const REPLICATEPERIOD = time.Second * 10
-const UNREPLICATEPERIOD = time.Second *10
+const HEARTBEATEXPIRATION = time.Second * 4
+const GETDATAEXPIRATION = time.Second * 4
+const REPLICATEPERIOD = time.Second * 20
+const UNREPLICATEPERIOD = time.Second *20
 
 /* Contact struct */
 type Contact struct {
@@ -148,8 +148,8 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 			/* First node in the ring */
 			dhtNode.SendSetSuccessor(newNode, dhtNode.ToNetworkNode())
 			dhtNode.SendSetPredecessor(newNode, dhtNode.ToNetworkNode())
-			dhtNode.Predecessor = newNode
 			dhtNode.Successor = newNode
+			dhtNode.Predecessor = newNode
 			dhtNode.updateFingerTables()
 			
 			/* Send data corresponding to new node */
@@ -212,10 +212,10 @@ func (dhtNode *DHTNode) UpdateAndSendData(newNode *NetworkNode, onlyOneNode bool
 //Update the finger table of all the nodes in the ring
 func (dhtNode *DHTNode) updateFingerTables(){
 	dhtNode.calcFingerTable()
-	if dhtNode.GetSuccessor() != nil {
+	if dhtNode.Successor != nil {
 		
 		/* More than one node in the ring */
-		dhtNode.SendUpdateFingerTablesAux(dhtNode.ToNetworkNode(), dhtNode.GetSuccessor())
+		dhtNode.SendUpdateFingerTablesAux(dhtNode.ToNetworkNode(), dhtNode.Successor)
 	}
 }
 
@@ -224,8 +224,7 @@ func (dhtNode *DHTNode) updateFingerTablesAux(original *NetworkNode){
 	if dhtNode.GetNodeId() != original.NodeId {
 		
 		/* Not reached the beginning of the ring */
-		dhtNode.calcFingerTable()
-		dhtNode.SendUpdateFingerTablesAux(original, dhtNode.GetSuccessor())
+		dhtNode.SendUpdateFingerTablesAux(original, dhtNode.Successor)
 	}
 }
 
@@ -359,8 +358,8 @@ func (dhtNode *DHTNode) calcNodeMinDist(key string) *NetworkNode {
 
 //Prints myself and sends printRingAux message to my successor
 func (dhtNode *DHTNode) PrintRing(){
-	fmt.Println("Printing ring...")
-	fmt.Println("Node " + dhtNode.GetNodeId())
+	ring := fmt.Sprintln("Printing ring...")
+	ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort())
 	//dhtNode.PrintFingerTable()
 	if dhtNode.GetSuccessor() != nil {
 //		fmt.Println("-Predecessor: " + dhtNode.Predecessor.NodeId)
@@ -370,17 +369,19 @@ func (dhtNode *DHTNode) PrintRing(){
 //			fmt.Println("-PredOfPred: " + dhtNode.PredOfPred.NodeId)
 //		}
 		/* More than one node in the ring */
-		dhtNode.SendPrintRingAux(dhtNode.ToNetworkNode(), dhtNode.GetSuccessor())
+		dhtNode.SendPrintRingAux(dhtNode.ToNetworkNode(), dhtNode.GetSuccessor(), ring)
+	} else{
+		fmt.Println(ring)
 	}
 }
 
 //If I was not the first node printing the ring, prints myself and sends
 //printRingAux to my successor
-func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode){
+func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode, ring string){
 	if dhtNode.GetNodeId() != original.NodeId {
 		
 		/* Not printed all the ring */
-		fmt.Println("Node " + dhtNode.GetNodeId())
+		ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort())
 //		fmt.Println("-Predecessor: " + dhtNode.Predecessor.NodeId)
 //		fmt.Println("-Successor: " + dhtNode.Successor.NodeId)
 //		
@@ -394,7 +395,9 @@ func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode){
 //			dhtNode.PrintFingerTable()
 //		}
 
-		dhtNode.SendPrintRingAux(original, dhtNode.GetSuccessor())
+		dhtNode.SendPrintRingAux(original, dhtNode.GetSuccessor(),ring)
+	} else{
+		fmt.Println(ring)
 	}
 }
 
@@ -492,8 +495,8 @@ func (dhtNode *DHTNode) StartHeartBeats(){
 
 func (dhtNode *DHTNode) DeadPredecessor(){
 	dhtNode.mutexPredeccessor.Lock()
+	fmt.Println("Muriooo  " + " " + dhtNode.GetPort() + " " + dhtNode.Predecessor.Port)
 	if dhtNode.PredOfPred == nil || dhtNode.PredOfPred.NodeId == dhtNode.nodeId {
-		
 		/* This is the only node remaining in the ring */
 		dhtNode.Successor = nil
 		dhtNode.Predecessor = nil

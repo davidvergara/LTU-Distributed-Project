@@ -5,6 +5,8 @@ import (
 	"dht"
 	"time"
 	"strconv"
+	"os"
+	"runtime"
 )
 
 //Test function number 1 for the Objective 2
@@ -112,12 +114,50 @@ func task22(){
  	
 	time.Sleep(5000 * time.Millisecond)
 	node0b.PrintRing()
-	time.Sleep(10000 * time.Millisecond)
+	time.Sleep(100000 * time.Millisecond)
+	node0b.PrintRing()
+	time.Sleep(20000 * time.Millisecond)
 }
 
 
 //Main function
 func main() {
+	task31()
 //	task22()
-	task21()
+//	task21()
+}
+
+func task31(){
+	typeNode := os.Args[1]
+	port := os.Args[2]
+	if typeNode == "initial" {
+		fmt.Println("Creando nodo inicial con puerto " + port)
+		node0b := dht.MakeDHTNode(nil, "localhost", port)
+ 		node0b.StartListenServer()
+ 		for {
+    		runtime.Gosched()
+		}
+	} else if typeNode == "connect" {
+		portToConnect := os.Args[3]
+		fmt.Println("Conectando nodo con puerto " + port + " al anillo " + portToConnect)
+		node0b := dht.MakeDHTNode(nil, "localhost", port)
+		node0b.StartListenServer()
+		dht.SendAddToRingForeign("localhost",portToConnect,node0b.ToNetworkNode())
+		for {
+    		runtime.Gosched()
+		}
+	} else{
+		portToConnect := os.Args[3]
+		fmt.Println("Conectando nodo con puerto " + port + " al anillo " + portToConnect)
+		node0b := dht.MakeDHTNode(nil, "localhost", port)
+		node0b.StartListenServer()
+		dht.SendAddToRingForeign("localhost",portToConnect,node0b.ToNetworkNode())
+		time.Sleep(5000 * time.Millisecond)
+		node0b.PrintRing()
+		for {
+			time.Sleep(10000 * time.Millisecond)
+			node0b.PrintRing()
+//    		runtime.Gosched()
+		}
+	}
 }
