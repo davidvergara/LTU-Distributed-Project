@@ -70,7 +70,8 @@ func (receive *DHTNode) StartListenServer(){
 	
 	go receive.StartHeartBeats()
 	go receive.StartReplicateRoutine()
-//	go receive.StartUnreplicateRoutine()
+	go receive.StartUnreplicateRoutine()
+	go receive.StartUpdateFingersRoutine()
 }
 
 //Decrypts a message received and calls the function that has 
@@ -229,16 +230,22 @@ func (receive *DHTNode) receiveInsertNodeBeforeMe(message Msg){
 	receive.InsertNodeBeforeMe(nodeToInsert)
 }
 
+//Receive message HEARTBEAT
+//Calls SendHeartBeatAnswer to answer the heartbeat
 func (receive *DHTNode) receiveHeartBeat(message Msg){
 	idHeartBeat := message.Args["heartBeatId"]
 	receive.SendHeartBeatAnswer(message.Source,idHeartBeat)
 }
 
+//Receive message "HEARTBEATANSWER"
+//Stores the node answered in the corresponding channel
 func (receive *DHTNode) receiveHeartBeatAnswer(message Msg){
 	idHeartBeat,_ := strconv.Atoi(message.Args["heartBeatId"])
 	receive.HeartBeatRequest[idHeartBeat] <- message.Source
 }
 
+//Receive message "SETDATA"
+//Stores all the data received
 func (receive *DHTNode) receiveSetData(message Msg){
 	dataToInsert := message.Data
 	for k,v := range dataToInsert.DataStored{
@@ -246,6 +253,8 @@ func (receive *DHTNode) receiveSetData(message Msg){
 	}
 }
 
+//Receive message "GETDATA"
+//Calls the function SendGetDataAnswer to send the corresponding answer to the sender
 func (receive *DHTNode) receiveGetData(message Msg){
 	if message.Args["requestType"]=="original"{
 		dataSetToBeSend :=MakeDataSet()
@@ -258,20 +267,26 @@ func (receive *DHTNode) receiveGetData(message Msg){
 	}
 }
 
+//Receive message "GETDATAANSWER"
+//Stores the answer in the corresponding channel
 func (receive *DHTNode) receiveGetDataAnswer (message Msg){
 	idGetData,_ := strconv.Atoi(message.Args["getDataId"])
 	receive.GetDataRequest[idGetData] <- message.Data
 }
 
+//Receive message "DELETEDATA"
+//Deletes all the data specified
 func (receive *DHTNode) receiveDeleteData(message Msg){
 	dataToDelete := message.Data
+	receive.SendDeleteData(receive.Successor, dataToDelete)
 	for k,_ := range dataToDelete.DataStored{
 		receive.Data.deleteData(k)
 	}
 }
 
+//Receive message "ADDDATA"
+//Stores the all the data that was sent 
 func (receive *DHTNode) receiveAddData(message Msg){
-	fmt.Println("Han llegado los datos")
 	for k,v := range message.Data.DataStored{
 		dataSetToBeSend :=MakeDataSet()
 		nodeResponsible:=receive.Lookup(k,receive.ToNetworkNode(),"")

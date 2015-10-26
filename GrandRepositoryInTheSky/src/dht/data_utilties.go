@@ -9,12 +9,14 @@ type DataSet struct {
 	DataStored map[string]Data
 }
 
+//Data struct
 type Data struct {
 	Value string
 	Original bool
 }
 
 
+//Stores the Data{key,value,original} in the dataset
 func (dataSet DataSet) StoreData(key string, value string, original bool) bool{
 	_,is := dataSet.DataStored[key]
 	
@@ -29,6 +31,7 @@ func (dataSet DataSet) StoreData(key string, value string, original bool) bool{
 	}
 }
 
+//Deletes the data with the key passed as parameter from the dataset
 func (dataSet DataSet) deleteData(key string) bool{
 	_,is := dataSet.DataStored[key]
 	
@@ -44,6 +47,7 @@ func (dataSet DataSet) deleteData(key string) bool{
 	}
 }
 
+//Gets the data with the key passed as parameter from the dataset
 func (dataSet DataSet) getData(key string) (Data, bool){
 	data,is := dataSet.DataStored[key]
 	
@@ -59,19 +63,22 @@ func (dataSet DataSet) getData(key string) (Data, bool){
 	}
 }
 
+//Change the data with the key passed as parameter from replica to original
 func (dataSet DataSet) changeReplicaOriginal(key string){
 	oldData,_ :=dataSet.getData(key)
 	dataSet.deleteData(key) 
 	dataSet.StoreData(key, oldData.Value, true)
 }
 
+//Change the data with the key passed as parameter from original to replica
 func (dataSet DataSet) changeOriginalReplica(key string){
 	oldData,_ :=dataSet.getData(key)
 	dataSet.deleteData(key) 
 	dataSet.StoreData(key, oldData.Value, false)
 }
 
-func (dataSet DataSet) getStoredData(key string) map[string]Data{
+//Gets all the dataset
+func (dataSet DataSet) getStoredData() map[string]Data{
 	return dataSet.DataStored
 }
 

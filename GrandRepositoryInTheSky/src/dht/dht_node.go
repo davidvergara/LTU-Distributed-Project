@@ -13,11 +13,13 @@ import (
 /* Consts */
 const SPACESIZE = 3
 
+const LOOKUPEXPIRATION = time.Second * 5
 const HEARTBEATPERIOD = time.Second * 5
 const HEARTBEATEXPIRATION = time.Second * 4
 const GETDATAEXPIRATION = time.Second * 4
-const REPLICATEPERIOD = time.Second * 20
-const UNREPLICATEPERIOD = time.Second *20
+const REPLICATEPERIOD = time.Second * 10
+const UNREPLICATEPERIOD = time.Second * 20
+const UPDATEFINGERPERIOD = time.Second * 10
 
 /* Contact struct */
 type Contact struct {
@@ -140,6 +142,7 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 	if bytes.Compare(valueNode, valueNodeNew)==0 {
 		
 		/* Can't be 2 nodes with same ID */
+		fmt.Println("hola jeje")
 		fmt.Println("Error, tried to add a nodeId that is already in the ring: "+newNode.NodeId)
 		
 	} else {
@@ -183,13 +186,19 @@ func (dhtNode *DHTNode) InsertNodeBeforeMe(newNode *NetworkNode) {
 	dhtNode.mutexPredeccessor.Unlock()
 }
 
+//Updates data of the actual node and sends data corresponding to new node to him
 func (dhtNode *DHTNode) UpdateAndSendData(newNode *NetworkNode, onlyOneNode bool){
+	
 	/* Send data corresponding to new node */
 	dataSetToBeSend :=MakeDataSet()
 	dataToBeDeleted :=MakeDataSet()
 	for k,v := range dhtNode.Data.DataStored{
+		
+		/* Send your replicas to the new node (as replica) */
 		if !v.Original {
 			dataSetToBeSend.StoreData(k,v.Value,false)
+			
+			/* Delete our replicas */
 			dhtNode.Data.deleteData(k)
 		
 		}
@@ -203,15 +212,21 @@ func (dhtNode *DHTNode) UpdateAndSendData(newNode *NetworkNode, onlyOneNode bool
 			kValue,_ := hex.DecodeString(k)
 			if k != dhtNode.nodeId{
 				if k == newNode.NodeId {
+					
+					//Send the corresponding original data to the new node
 					dataSetToBeSend.StoreData(k,v.Value,true)
+					//Store replica
 					dhtNode.Data.changeOriginalReplica(k)
 					if !onlyOneNode {
+						
 						dataToBeDeleted.StoreData(k,v.Value,false)
 					}						
 				} else if !between(newNodeValue, actualNodeValue, kValue){
 					dataSetToBeSend.StoreData(k,v.Value,true)
 					dhtNode.Data.changeOriginalReplica(k)
+					//Store replica
 					if !onlyOneNode {
+						
 						dataToBeDeleted.StoreData(k,v.Value,false)
 					}		
 				}
@@ -219,8 +234,12 @@ func (dhtNode *DHTNode) UpdateAndSendData(newNode *NetworkNode, onlyOneNode bool
 		}
 	}
 	if !onlyOneNode {
+		
+		//Sends the successor the datas he has to delete
 		dhtNode.SendDeleteData(dhtNode.Successor,dataToBeDeleted)
 	}
+	
+	//Send the new node its data
 	dhtNode.SendSetData(newNode,dataSetToBeSend)
 }
 
@@ -229,7 +248,7 @@ func (dhtNode *DHTNode) updateFingerTables(){
 	dhtNode.calcFingerTable()
 	if dhtNode.Successor != nil {
 		
-		/* More than one node in the ring */
+		//More than one node in the ring
 		dhtNode.SendUpdateFingerTablesAux(dhtNode.ToNetworkNode(), dhtNode.Successor)
 	}
 }
@@ -249,9 +268,15 @@ func (dhtNode *DHTNode) calcFingerTable (){
 		n,_ :=hex.DecodeString(dhtNode.nodeId)
 		idFinger,_ :=calcFinger(n, k, SPACESIZE)
 		nodeFinger:= dhtNode.Lookup(idFinger,dhtNode.ToNetworkNode(),"")
-		dhtNode.fingers[k-1] = new(Finger)
-		dhtNode.fingers[k-1].fingerId=k
-		dhtNode.fingers[k-1].nodeIdent=nodeFinger
+		if nodeFinger != nil {
+			dhtNode.fingers[k-1] = new(Finger)
+			dhtNode.fingers[k-1].fingerId=k
+			dhtNode.fingers[k-1].nodeIdent=nodeFinger
+		} else {
+			dhtNode.fingers[k-1] = new(Finger)
+			dhtNode.fingers[k-1].fingerId=k
+			dhtNode.fingers[k-1].nodeIdent=dhtNode.ToNetworkNode()
+		}
 	}
 }
 
@@ -326,9 +351,13 @@ func (dhtNode *DHTNode) Lookup(key string, sourceNode *NetworkNode, idLookup str
 				select {
 					case answer := <- channel:
 						return answer
+					case <-time.After(LOOKUPEXPIRATION):
+						fmt.Println("Waiting time for lookup answer expirated")
+						return nil
 				}
 				return nil
 			} else {
+				
 				/* The node that called the function is just and intermediary */
 				return nil
 			}
@@ -383,8 +412,10 @@ func (dhtNode *DHTNode) PrintRing(){
 	
 	ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort()) + fmt.Sprintln(data)
 	
-	//dhtNode.PrintFingerTable()
+//	ring = ring + dhtNode.PrintFingerTable()
 	if dhtNode.GetSuccessor() != nil {
+		
+		
 //		fmt.Println("-Predecessor: " + dhtNode.Predecessor.NodeId)
 //		fmt.Println("-Successor: " + dhtNode.Successor.NodeId)
 //		
@@ -409,6 +440,10 @@ func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode, ring string){
 			}
 		/* Not printed all the ring */
 		ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort()) + fmt.Sprintln(data)
+//		ring = ring + dhtNode.PrintFingerTable()
+
+
+
 //		fmt.Println("-Predecessor: " + dhtNode.Predecessor.NodeId)
 //		fmt.Println("-Successor: " + dhtNode.Successor.NodeId)
 //		
@@ -484,17 +519,20 @@ func (dhtNode *DHTNode) PrintFinger(k int, m int){
 }
 
 //Prints all the fingers of this node
-func (dhtNode *DHTNode) PrintFingerTable() {
+func (dhtNode *DHTNode) PrintFingerTable() string{
+	result := "\n"
 	for i,v := range dhtNode.fingers {
 		if v != nil {
-			fmt.Printf("   -Finger %d -> %s\n",v.fingerId,v.nodeIdent.NodeId)
+			result = result + fmt.Sprintf("   -Finger %d -> %s\n",v.fingerId,v.nodeIdent.NodeId)
 		} else{
-			fmt.Printf("   -Finger %d -> null\n",i+1)
+			result = result + fmt.Sprintf("   -Finger %d -> null\n",i+1)
 		}
 		
 	}
+	return result
 }
 
+//Starts the heartbeat routine
 func (dhtNode *DHTNode) StartHeartBeats(){
 	for {
 		time.Sleep(HEARTBEATPERIOD)
@@ -506,7 +544,6 @@ func (dhtNode *DHTNode) StartHeartBeats(){
 				case answer := <- channel:
 				{	
 					/* Our predecessor is alive */
-					//fmt.Println("--Node " + dhtNode.nodeId + " putting his Pred of Pred as " + answer.NodeId)
 					dhtNode.SetPredOfPred(answer)
 				}	
 				case <-time.After(HEARTBEATEXPIRATION):
@@ -520,10 +557,13 @@ func (dhtNode *DHTNode) StartHeartBeats(){
 	}
 }
 
+//When our predecessor is dead, sets your PredOfPred as your predecessor. Also 
+//Change the replicas of that node to original
 func (dhtNode *DHTNode) DeadPredecessor(){
 	dhtNode.mutexPredeccessor.Lock()
 	fmt.Println("Muriooo  " + " " + dhtNode.GetPort() + " " + dhtNode.Predecessor.Port)
 	if dhtNode.PredOfPred == nil || dhtNode.PredOfPred.NodeId == dhtNode.nodeId {
+		
 		/* This is the only node remaining in the ring */
 		dhtNode.Successor = nil
 		dhtNode.Predecessor = nil
@@ -575,6 +615,7 @@ func (dhtNode *DHTNode) DeadPredecessor(){
 	dhtNode.mutexPredeccessor.Unlock()
 }
 
+//Starts the routine in charge of replicate data
 func (dhtNode *DHTNode) StartReplicateRoutine(){
 	for {
 		time.Sleep(REPLICATEPERIOD)
@@ -582,6 +623,8 @@ func (dhtNode *DHTNode) StartReplicateRoutine(){
 			dataSetToBeSend :=MakeDataSet()
 			for k,v := range dhtNode.Data.DataStored{
 				if v.Original {
+					
+					/* Replicates your original data to the successor */
 					dataSetToBeSend.StoreData(k,v.Value,false)
 				}
 			}
@@ -590,26 +633,39 @@ func (dhtNode *DHTNode) StartReplicateRoutine(){
 	}
 }
 
+//Starts the routine in charge of delete data replicated more than once
 func (dhtNode *DHTNode) StartUnreplicateRoutine(){
 	for {
 		time.Sleep(UNREPLICATEPERIOD)
 		if dhtNode.Predecessor != nil && dhtNode.PredOfPred != nil {
-			dataSetToBeSend :=MakeDataSet()
 			for k,v := range dhtNode.Data.DataStored{
 				if !v.Original {
 					valuePred,_ :=hex.DecodeString(dhtNode.Predecessor.NodeId)
 					valuePredOfPred,_ := hex.DecodeString(dhtNode.PredOfPred.NodeId)
 					valueK,_ := hex.DecodeString(k)
-//					if k <= dhtNode.Predecessor.NodeId && k <= dhtNode.PredOfPred.NodeId {
-					if between(valuePredOfPred,valuePred,valueK){
+					
+					if bytes.Compare(valueK,valuePredOfPred) == 0{
 						
 						/* Data replicated more than once */
 						dhtNode.Data.deleteData(k)
+					} else if bytes.Compare(valueK,valuePred) != 0{
+						if !between(valuePredOfPred, valuePred, valueK) {
+							
+							/* Data replicated more than once */
+							dhtNode.Data.deleteData(k)
+						}
 					}
 				}
 			}
-			dhtNode.SendSetData(dhtNode.Successor,dataSetToBeSend)
 		}
+	}
+}
+
+//Starts the routine in charge of update the local node's finger table
+func (dhtNode *DHTNode) StartUpdateFingersRoutine(){
+	for {
+		time.Sleep(UPDATEFINGERPERIOD)
+		dhtNode.calcFingerTable()
 	}
 }
 

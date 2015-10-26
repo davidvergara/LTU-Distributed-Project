@@ -52,6 +52,7 @@ func (dhtNode *DHTNode) SendLookup(key string, dhtMinNode *NetworkNode,
 	 sourceNode *NetworkNode, idLookup string)chan *NetworkNode{
 
 	if (dhtNode.nodeId == sourceNode.NodeId) {
+		
 		/* We need a channel to save the answer */
 		dhtNode.mutexNumLookup.Lock()
 		numLookupString := strconv.Itoa(dhtNode.NumLookup)
@@ -70,6 +71,7 @@ func (dhtNode *DHTNode) SendLookup(key string, dhtMinNode *NetworkNode,
 		Send(dhtMinNode, mess)
 		return answerChannel
 	} else {
+		
 		/* The node is just an intermediary */
 		mess := Msg{Source: sourceNode,
 			Dest: dhtMinNode,
@@ -132,6 +134,21 @@ func (dhtNode *DHTNode) SendPrintRing(dest *NetworkNode){
 	Send(dest,mess)
 }
 
+//Sends to the destination ip:port a PRINTRING message
+func SendPrintRingForeign(destIP string, destPort string){
+	auxNetwork := new(NetworkNode)
+	auxNetwork.Ip = destIP
+	auxNetwork.Port = destPort
+	auxNetwork.NodeId = ""
+	mess := Msg{Source: new(NetworkNode),
+				Dest: auxNetwork,
+				Type: "PRINTRING",
+				Args: nil,
+ 				Data: DataSet{}}
+	
+	Send(auxNetwork,mess)
+}
+
 //Sends to the destination a PRINTRINGAUX message (continuing printing ring)
 func (dhtNode *DHTNode) SendPrintRingAux(original *NetworkNode, dest *NetworkNode, ring string){
 	mess := Msg{Source: original,
@@ -144,7 +161,7 @@ func (dhtNode *DHTNode) SendPrintRingAux(original *NetworkNode, dest *NetworkNod
 	Send(dest,mess)
 }
 
-//Sends to the destination a ADDTORING message.
+//Sends to the destination an ADDTORING message.
 //NewNode: node to be added
 func (dhtNode *DHTNode) SendAddToRing(dest *NetworkNode, newNode *NetworkNode){
 	mess := Msg{Source: newNode,
@@ -156,6 +173,8 @@ func (dhtNode *DHTNode) SendAddToRing(dest *NetworkNode, newNode *NetworkNode){
 	Send(dest,mess)
 }
 
+//Sends to the destination ip:port an ADDTORING message.
+//NewNode: node to be added
 func SendAddToRingForeign(destIP string, destPort string, newNode *NetworkNode){
 	auxNetwork := new(NetworkNode)
 	auxNetwork.Ip = destIP
@@ -170,6 +189,8 @@ func SendAddToRingForeign(destIP string, destPort string, newNode *NetworkNode){
 	Send(auxNetwork,mess)
 }
 
+//Sends to the destination ip:port an ADDDATA message
+//data: data to be added
 func SendDataToRingForeign(destIP string, destPort string,data DataSet){
 	auxNetwork := new(NetworkNode)
 	auxNetwork.Ip = destIP
@@ -220,9 +241,9 @@ func (dhtNode *DHTNode) SendInsertNodeBeforeMe (nodeResponsible *NetworkNode,nod
 	Send(nodeResponsible,mess)
 }
 
+//Sends the destination node a HEARTBEAT message
 func (dhtNode *DHTNode) SendHeartBeat(dest *NetworkNode)chan *NetworkNode{
 
-	//fmt.Println("+Nodo " + dhtNode.nodeId + " sending heartbeat to " + dest.NodeId)
 	/* We need a channel to save the answer */
 	dhtNode.mutexNumHeartBeat.Lock()
 	numHeartBeat := strconv.Itoa(dhtNode.NumHeartBeat)
@@ -236,16 +257,13 @@ func (dhtNode *DHTNode) SendHeartBeat(dest *NetworkNode)chan *NetworkNode{
 	dhtNode.HeartBeatRequest[dhtNode.NumHeartBeat]=answerChannel
 	dhtNode.NumHeartBeat++
 	dhtNode.mutexNumHeartBeat.Unlock()
-	if dhtNode.GetPort() == "1201"{
-		fmt.Println("Enviando latido a... " + dhtNode.Predecessor.Port)
-	}
 	Send(dest, mess)
 	return answerChannel
 }
 
+//Sends the dsetination node a HEARTBEAT answer message
 func (dhtNode *DHTNode) SendHeartBeatAnswer(dest *NetworkNode, idHeartBeat string){
 
-	//fmt.Println("-Nodo " + dhtNode.nodeId + " answering heartbeat to " + dest.NodeId + " with answer " + dhtNode.Predecessor.NodeId)
 	mess := Msg{Source: dhtNode.Predecessor,
 			Dest: dest,
 	 		Type: "HEARTBEATANSWER", 
@@ -256,6 +274,8 @@ func (dhtNode *DHTNode) SendHeartBeatAnswer(dest *NetworkNode, idHeartBeat strin
 	Send(dest, mess)
 }
 
+//Sends the destination node a data to be stored
+//datasetToSend: data to be stored by the dest node
 func (dhtNode *DHTNode) SendSetData(dest *NetworkNode, datasetToSend DataSet){
 	
 		mess := Msg{Source: dhtNode.ToNetworkNode(),
@@ -267,6 +287,7 @@ func (dhtNode *DHTNode) SendSetData(dest *NetworkNode, datasetToSend DataSet){
 		Send(dest,mess)
 }
 
+//Sends the destination node a GETDATA request
 func (dhtNode *DHTNode) SendGetData(typeData string, dest *NetworkNode)chan DataSet{
 
 	/* We need a channel to save the answer */
@@ -287,6 +308,7 @@ func (dhtNode *DHTNode) SendGetData(typeData string, dest *NetworkNode)chan Data
 	return answerChannel
 }
 
+//Sends the destination node a GETDATAANSWER message
 func (dhtNode *DHTNode) SendGetDataAnswer(dest *NetworkNode, dataSet DataSet, dataId string){
 
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
@@ -299,6 +321,7 @@ func (dhtNode *DHTNode) SendGetDataAnswer(dest *NetworkNode, dataSet DataSet, da
 	Send(dest, mess)
 }	
 
+//Sends the destination node a DELETEDATA message
 func (dhtNode *DHTNode) SendDeleteData(dest *NetworkNode, datasetToSend DataSet){
 	
 		mess := Msg{Source: dhtNode.ToNetworkNode(),
@@ -308,4 +331,18 @@ func (dhtNode *DHTNode) SendDeleteData(dest *NetworkNode, datasetToSend DataSet)
  			Data: datasetToSend} 
 		
 		Send(dest,mess)
+}
+
+//Sends the destination ip:port node a DELETEDATA message
+func SendDeleteDataForeign(destIP string, destPort string,data DataSet){
+	auxNetwork := new(NetworkNode)
+	auxNetwork.Ip = destIP
+	auxNetwork.Port = destPort
+	auxNetwork.NodeId = ""
+	mess := Msg{Source: new(NetworkNode),
+				Dest: auxNetwork,
+				Type: "DELETEDATA",
+				Args: nil,
+ 				Data: data}
+	Send(auxNetwork,mess)
 }

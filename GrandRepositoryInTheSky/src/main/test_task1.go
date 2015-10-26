@@ -128,10 +128,16 @@ func main() {
 }
 
 func task31(){
+	
+	//Replication test (to be launched in the terminal
 	typeNode := os.Args[1]
 	port := os.Args[2]
 	
 	if typeNode == "initial" {
+		
+		//Args[1] = type of request
+		//Args[2] = port of the first node
+		//Args[3] = id of the node
 		id := os.Args[3]
 		fmt.Println("Creando nodo inicial con puerto " + port)
 		node0b := dht.MakeDHTNode(&id, "localhost", port)
@@ -140,9 +146,14 @@ func task31(){
     		runtime.Gosched()
 		}
 	} else if typeNode == "connect" {
-		id := os.Args[4]
+		
+		//Args[1] = type of request
+		//Args[2] = port of the node
+		//Args[3] = port to connect to
+		//Args[4] = id of the new node
 		portToConnect := os.Args[3]
-		fmt.Println("Conectando nodo con puerto " + port + " al anillo " + portToConnect)
+		id := os.Args[4]
+		fmt.Println("Connecting node " + port + " to node " + portToConnect)
 		node0b := dht.MakeDHTNode(&id, "localhost", port)
 		node0b.StartListenServer()
 		dht.SendAddToRingForeign("localhost",portToConnect,node0b.ToNetworkNode())
@@ -150,30 +161,32 @@ func task31(){
     		runtime.Gosched()
 		}
 	} else if typeNode == "addData" {
-		fmt.Println("Enviando datos al nodo con puerto " + port)
+		
+		//Args[1] = type of request
+		//Args[2] = port of the node to connect
+		//Args[3] = data to send
+		fmt.Println("Sending data to node " + port)
 		
 		dataSetToBeSend :=dht.MakeDataSet()
 		dataSetToBeSend.StoreData(os.Args[3],"0",true)
-		dataSetToBeSend.StoreData(os.Args[4],"1",true)
-		dataSetToBeSend.StoreData(os.Args[5],"2",true)
-		fmt.Println("Enviando Datos")
 		dht.SendDataToRingForeign("localhost", port,dataSetToBeSend)
-		for {
-    		runtime.Gosched()
-		}
-	} else{
-		id := os.Args[4]
-		portToConnect := os.Args[3]
-		fmt.Println("Conectando nodo con puerto " + port + " al anillo " + portToConnect)
-		node0b := dht.MakeDHTNode(&id, "localhost", port)
-		node0b.StartListenServer()
-		dht.SendAddToRingForeign("localhost",portToConnect,node0b.ToNetworkNode())
-		time.Sleep(5000 * time.Millisecond)
-		node0b.PrintRing()
-		for {
-			time.Sleep(10000 * time.Millisecond)
-			node0b.PrintRing()
-//    		runtime.Gosched()
-		}
+		time.Sleep(1000 * time.Millisecond)
+	} else if typeNode == "deleteData" {
+		
+		//Args[1] = type of request
+		//Args[2] = port of the node to connect
+		//Args[3] = data to delete
+		fmt.Println("Sending delete data request to node " + port)
+		dataSetToBeSend :=dht.MakeDataSet()
+		dataSetToBeSend.StoreData(os.Args[3],"0",true)
+		dht.SendDeleteDataForeign("localhost", port,dataSetToBeSend)
+		time.Sleep(1000 * time.Millisecond)
+	}else {
+		
+		//Args[1] = type of request
+		//Args[2] = port of the node to send print ring request
+		fmt.Println("Sending Print Ring request to node " + port)
+		dht.SendPrintRingForeign("localhost", port)
+		time.Sleep(1000 * time.Millisecond)
 	}
 }
