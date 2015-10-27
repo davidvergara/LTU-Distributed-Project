@@ -357,6 +357,14 @@ func (receive *DHTNode) receivePutDataHttp(message Msg){
 	var exito bool
 	for k,v := range dataToPut.DataStored{
 		exito = receive.Data.updateData(k,v.Value)
+		if exito {
+			data,_ := receive.Data.getData(k)
+			if data.Original{
+				dataToPut.changeOriginalReplica(k)
+				receive.SendDeleteDataSuc(receive.Successor,dataToPut)
+				receive.SendSetData(receive.Successor,dataToPut)
+			}
+		}
 //		
 //		data,exito := receive.Data.getData(k)
 //		if exito {
@@ -390,7 +398,9 @@ func (receive *DHTNode) receiveDeleteDataHttp(message Msg){
 	for k,_ := range dataToDelete.DataStored{
 		exito = receive.Data.deleteData(k)
 		if exito {
-			receive.SendDeleteDataSuc(receive.Successor,dataToDelete)
+			if receive.Successor != nil {
+				receive.SendDeleteDataSuc(receive.Successor,dataToDelete)
+			}
 		}
 	}
 	receive.SendDeleteDataAnswer(message.Source,idDeleteData,exito)
