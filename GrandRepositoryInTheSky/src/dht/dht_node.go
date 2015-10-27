@@ -674,6 +674,23 @@ func (dhtNode *DHTNode) StartUpdateFingersRoutine(){
 	}
 }
 
+func (dhtNode *DHTNode) HttpPost(key string, value string) bool{
+	nodeResponsible := dhtNode.Lookup(key, dhtNode.ToNetworkNode(), "")
+	dataSetToBeSend :=MakeDataSet()
+	dataSetToBeSend.StoreData(key,value,true)
+	
+	channel := dhtNode.SendSetDataWithAnswer(nodeResponsible,dataSetToBeSend)
+	
+	/* Waiting the answer in the channel*/
+	select {
+		case answer := <- channel:
+			return answer
+		case <-time.After(LOOKUPEXPIRATION):
+			fmt.Println("Waiting time for SendSetDataWithAnswer answer expirated")
+			return false
+	}
+}
+
 func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {
 	/* idBytes, _ := hex.DecodeString(dhtNode.nodeId)
 	fingerHex, _ := calcFinger(idBytes, m, bits)
