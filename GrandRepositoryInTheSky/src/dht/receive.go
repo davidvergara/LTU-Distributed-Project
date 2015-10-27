@@ -292,6 +292,10 @@ func (receive *DHTNode) receiveGetData(message Msg){
 			}
 		}
 		receive.SendGetDataAnswer(message.Source,dataSetToBeSend,message.Args["getDataId"])
+	} else if message.Args["requestType"] == "all"{
+		dataSetToBeSend :=MakeDataSet()
+		dataSetToBeSend.DataStored = receive.Data.getStoredData()
+		receive.SendGetDataAnswer(message.Source,dataSetToBeSend,message.Args["getDataId"])
 	}
 }
 
