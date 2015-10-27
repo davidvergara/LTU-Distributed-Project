@@ -141,7 +141,9 @@ func task31(){
 		id := os.Args[3]
 		fmt.Println("Creando nodo inicial con puerto " + port)
 		node0b := dht.MakeDHTNode(&id, "localhost", port)
+		node0b.InitializeWebServer(port)
  		node0b.StartListenServer()
+ 		
  		for {
     		runtime.Gosched()
 		}
