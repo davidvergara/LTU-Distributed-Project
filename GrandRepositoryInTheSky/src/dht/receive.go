@@ -356,22 +356,24 @@ func (receive *DHTNode) receivePutDataHttp(message Msg){
 	dataToPut := message.Data
 	var exito bool
 	for k,v := range dataToPut.DataStored{
-		data,exito := receive.Data.getData(k)
-		if exito {
-			
-			//Success getting the data
-			exito = receive.Data.deleteData(k)
-			if exito {
-				
-				//Success while deleting data
-				exito = receive.Data.StoreData(k,v.Value,v.Original)
-				if !exito {
-					
-					//Failed while updating data -> we restore the old one
-					receive.Data.StoreData(k,data.Value,data.Original)
-				}
-			}
-		}
+		exito = receive.Data.updateData(k,v.Value)
+//		
+//		data,exito := receive.Data.getData(k)
+//		if exito {
+//			
+//			//Success getting the data
+//			exito = receive.Data.deleteData(k)
+//			if exito {
+//				
+//				//Success while deleting data
+//				exito = receive.Data.StoreData(k,v.Value,v.Original)
+//				if !exito {
+//					
+//					//Failed while updating data -> we restore the old one
+//					receive.Data.StoreData(k,data.Value,data.Original)
+//				}
+//			}
+//		}
 	}
 	receive.SendPutDataAnswer(message.Source,idPutData,exito)
 }

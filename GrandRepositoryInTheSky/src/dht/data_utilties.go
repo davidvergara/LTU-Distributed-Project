@@ -47,6 +47,17 @@ func (dataSet DataSet) deleteData(key string) bool{
 	}
 }
 
+func (dataSet DataSet) updateData(key string, value string) bool {
+	data,is := dataSet.getData(key)
+	if is{
+		dataSet.DataStored[key] = Data{Value : value,
+								  Original : data.Original}
+		return true
+	} else{
+		return false
+	}
+}
+
 //Gets the data with the key passed as parameter from the dataset
 func (dataSet DataSet) getData(key string) (Data, bool){
 	data,is := dataSet.DataStored[key]
