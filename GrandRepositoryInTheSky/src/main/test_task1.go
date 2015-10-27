@@ -122,6 +122,7 @@ func task22(){
 
 //Main function
 func main() {
+//	task32()
 	task31()
 //	task22()
 //	task21()
@@ -129,7 +130,7 @@ func main() {
 
 func task31(){
 	
-	//Replication test (to be launched in the terminal
+	//Replication test (to be launched in the terminal)
 	typeNode := os.Args[1]
 	port := os.Args[2]
 	
@@ -158,6 +159,68 @@ func task31(){
 		fmt.Println("Connecting node " + port + " to node " + portToConnect)
 		node0b := dht.MakeDHTNode(&id, "localhost", port)
 		node0b.InitializeWebServer(port)
+		node0b.StartListenServer()
+		dht.SendAddToRingForeign("localhost",portToConnect,node0b.ToNetworkNode())
+		for {
+    		runtime.Gosched()
+		}
+	} else if typeNode == "addData" {
+		
+		//Args[1] = type of request
+		//Args[2] = port of the node to connect
+		//Args[3] = data to send
+		fmt.Println("Sending data to node " + port)
+		
+		dataSetToBeSend :=dht.MakeDataSet()
+		dataSetToBeSend.StoreData(os.Args[3],"0",true)
+		dht.SendDataToRingForeign("localhost", port,dataSetToBeSend)
+		time.Sleep(1000 * time.Millisecond)
+	} else if typeNode == "deleteData" {
+		
+		//Args[1] = type of request
+		//Args[2] = port of the node to connect
+		//Args[3] = data to delete
+		fmt.Println("Sending delete data request to node " + port)
+		dataSetToBeSend :=dht.MakeDataSet()
+		dataSetToBeSend.StoreData(os.Args[3],"0",true)
+		dht.SendDeleteDataForeign("localhost", port,dataSetToBeSend)
+		time.Sleep(1000 * time.Millisecond)
+	}else {
+		
+		//Args[1] = type of request
+		//Args[2] = port of the node to send print ring request
+		fmt.Println("Sending Print Ring request to node " + port)
+		dht.SendPrintRingForeign("localhost", port)
+		time.Sleep(1000 * time.Millisecond)
+	}
+}
+
+func task32(){
+	
+	//Replication test (to be launched in the terminal 160bits)
+	typeNode := os.Args[1]
+	port := os.Args[2]
+	
+	if typeNode == "initial" {
+		
+		//Args[1] = type of request
+		//Args[2] = port of the first node
+		node0b := dht.MakeDHTNode(nil, "localhost", port)
+		fmt.Println("Creando nodo inicial " + node0b.GetNodeId() + ":" + port)
+		node0b.InitializeWebServer(port)
+ 		node0b.StartListenServer()
+ 		
+ 		for {
+    		runtime.Gosched()
+		}
+	} else if typeNode == "connect" {
+		
+		//Args[1] = type of request
+		//Args[2] = port of the node
+		//Args[3] = port to connect to
+		portToConnect := os.Args[3]
+		node0b := dht.MakeDHTNode(nil, "localhost", port)
+		fmt.Println("Connecting node "+ node0b.GetNodeId() + ":" + port + " to port " + portToConnect)
 		node0b.StartListenServer()
 		dht.SendAddToRingForeign("localhost",portToConnect,node0b.ToNetworkNode())
 		for {

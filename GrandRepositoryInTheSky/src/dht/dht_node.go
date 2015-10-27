@@ -424,19 +424,11 @@ func (dhtNode *DHTNode) PrintRing(){
 		data = data + k + " " + v.Value + " " + strconv.FormatBool(v.Original) + "\n"
 	}
 	
-	
 	ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort()) + fmt.Sprintln(data)
 	
 //	ring = ring + dhtNode.PrintFingerTable()
 	if dhtNode.GetSuccessor() != nil {
 		
-		
-//		fmt.Println("-Predecessor: " + dhtNode.Predecessor.NodeId)
-//		fmt.Println("-Successor: " + dhtNode.Successor.NodeId)
-//		
-//		if dhtNode.PredOfPred != nil {
-//			fmt.Println("-PredOfPred: " + dhtNode.PredOfPred.NodeId)
-//		}
 		/* More than one node in the ring */
 		
 		dhtNode.SendPrintRingAux(dhtNode.ToNetworkNode(), dhtNode.GetSuccessor(), ring)
@@ -576,7 +568,7 @@ func (dhtNode *DHTNode) StartHeartBeats(){
 //Change the replicas of that node to original
 func (dhtNode *DHTNode) DeadPredecessor(){
 	dhtNode.mutexPredeccessor.Lock()
-	fmt.Println("Muriooo  " + " " + dhtNode.GetPort() + " " + dhtNode.Predecessor.Port)
+	fmt.Println("Node " + dhtNode.Predecessor.NodeId + " died")
 	if dhtNode.PredOfPred == nil || dhtNode.PredOfPred.NodeId == dhtNode.nodeId {
 		
 		/* This is the only node remaining in the ring */
