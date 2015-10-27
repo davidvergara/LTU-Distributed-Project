@@ -404,7 +404,7 @@ func (dhtNode *DHTNode) SendPutDataWithAnswer(dest *NetworkNode, data DataSet)ch
 					"putDataId": numPutDataString},
 				Data: data}
 	answerChannel := make(chan bool)
-	dhtNode.SetDataRequest[dhtNode.NumPutData] = answerChannel
+	dhtNode.PutDataRequest[dhtNode.NumPutData] = answerChannel
 	dhtNode.NumPutData++
 	dhtNode.mutexPutData.Unlock()
 	Send(dest, mess)
