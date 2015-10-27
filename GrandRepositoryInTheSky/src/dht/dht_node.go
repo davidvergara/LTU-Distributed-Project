@@ -740,7 +740,7 @@ func (dhtNode *DHTNode) HttpPut(key string, value string) (bool, *NetworkNode){
 //Delete a pain [key,value] of the ring
 //The key is inserted as parameter
 //Return true and the node where was deleted the pair if all was
-//correct
+//correct 
 //Return false if there was an error
 func (dhtNode *DHTNode) HttpDelete(key string) (bool, *NetworkNode){
 	nodeResponsible := dhtNode.Lookup(key, dhtNode.ToNetworkNode(), "")
