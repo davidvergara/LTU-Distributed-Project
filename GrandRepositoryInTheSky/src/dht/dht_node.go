@@ -684,7 +684,7 @@ func (dhtNode *DHTNode) StartUpdateFingersRoutine(){
 	}
 }
 
-func (dhtNode *DHTNode) HttpPost(key string, value string) bool{
+func (dhtNode *DHTNode) HttpPost(key string, value string) (bool, *NetworkNode){
 	nodeResponsible := dhtNode.Lookup(key, dhtNode.ToNetworkNode(), "")
 	dataSetToBeSend :=MakeDataSet()
 	dataSetToBeSend.StoreData(key,value,true)
@@ -694,10 +694,58 @@ func (dhtNode *DHTNode) HttpPost(key string, value string) bool{
 	/* Waiting the answer in the channel*/
 	select {
 		case answer := <- channel:
-			return answer
+			return answer, nodeResponsible
 		case <-time.After(LOOKUPEXPIRATION):
 			fmt.Println("Waiting time for SendSetDataWithAnswer answer expirated")
-			return false
+			return false, nodeResponsible
+	}
+}
+
+func (dhtNode *DHTNode) HttpGet(key string) (bool, string, *NetworkNode){
+	nodeResponsible := dhtNode.Lookup(key, dhtNode.ToNetworkNode(), "")
+	
+	channel:= dhtNode.SendGetData("all",nodeResponsible)
+		
+	/* Waiting the answer in the channel*/
+	select {
+		case dataSet := <- channel:
+			data, success :=dataSet.getData(key)
+			return success, data.Value, nodeResponsible
+		case <-time.After(LOOKUPEXPIRATION):
+			fmt.Println("Waiting time for SendGetData answer expirated")
+			return false, "", nodeResponsible
+	}
+}
+
+func (dhtNode *DHTNode) HttpPut(key string, value string) (bool, *NetworkNode){
+	nodeResponsible := dhtNode.Lookup(key, dhtNode.ToNetworkNode(), "")
+	dataSetToBeSend :=MakeDataSet()
+	dataSetToBeSend.StoreData(key,value,true)
+	channel := dhtNode.SendPutDataWithAnswer(nodeResponsible, dataSetToBeSend)
+	
+	/* Waiting the answer in the channel*/
+	select {
+		case answer := <- channel:
+			return answer, nodeResponsible
+		case <-time.After(LOOKUPEXPIRATION):
+			fmt.Println("Waiting time for SendPutDataWithAnswer answer expirated")
+			return false, nodeResponsible
+	}
+}
+
+func (dhtNode *DHTNode) HttpDelete(key string) (bool, *NetworkNode){
+	nodeResponsible := dhtNode.Lookup(key, dhtNode.ToNetworkNode(), "")
+	dataSetToBeSend :=MakeDataSet()
+	dataSetToBeSend.StoreData(key,"",true)
+	channel := dhtNode.SendDeleteDataWithAnswer(nodeResponsible,dataSetToBeSend)
+	
+	/* Waiting the answer in the channel*/
+	select {
+		case answer := <- channel:
+			return answer, nodeResponsible
+		case <-time.After(LOOKUPEXPIRATION):
+			fmt.Println("Waiting time for SendDeleteDataWithAnswer answer expirated")
+			return false, nodeResponsible
 	}
 }
 
