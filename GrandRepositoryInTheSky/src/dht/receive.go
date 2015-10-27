@@ -156,9 +156,29 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		{
 			receive.receiveDeleteData(message)
 		}
+		case message.Type == "DELETEDATASUC":
+		{
+			receive.receiveDeleteDataSuc(message)
+		}
+		case message.Type == "DELETEDATAHTTP":
+		{
+			receive.receiveDeleteDataHttp(message)
+		}
+		case message.Type == "DELETEDATAHTTPANSWER":
+		{
+			receive.receiveDeleteDataHttpAnswer(message)
+		}
 		case message.Type == "ADDDATA":
 		{
 			receive.receiveAddData(message)
+		}
+		case message.Type == "PUTDATAHTTP":
+		{
+			receive.receivePutDataHttp(message)
+		}
+		case message.Type == "PUTDATAHTTPANSWER":
+		{
+			receive.receivePutDataHttpAnswer(message)
 		}
 		default: 
 		{
@@ -283,10 +303,19 @@ func (receive *DHTNode) receiveGetDataAnswer (message Msg){
 }
 
 //Receive message "DELETEDATA"
-//Deletes all the data specified
+//Deletes all the data specified and tells its successor to do the same
 func (receive *DHTNode) receiveDeleteData(message Msg){
 	dataToDelete := message.Data
-	receive.SendDeleteData(receive.Successor, dataToDelete)
+	receive.SendDeleteDataSuc(receive.Successor, dataToDelete)
+	for k,_ := range dataToDelete.DataStored{
+		receive.Data.deleteData(k)
+	}
+}
+
+//Receive message "DELETEDATASUC"
+//Deletes all the data specified
+func (receive *DHTNode) receiveDeleteDataSuc(message Msg){
+	dataToDelete := message.Data
 	for k,_ := range dataToDelete.DataStored{
 		receive.Data.deleteData(k)
 	}
@@ -316,4 +345,52 @@ func (receive *DHTNode) receiveSetDataHttp(message Msg){
 func (receive *DHTNode) receiveSetDataHttpAnswer(message Msg){
 	idSetData,_ := strconv.Atoi(message.Args["setDataId"])
 	receive.SetDataRequest[idSetData] <- message.Args["bool"] == "true"
+}
+
+func (receive *DHTNode) receivePutDataHttp(message Msg){
+	idPutData := message.Args["putDataId"]
+	dataToPut := message.Data
+	var exito bool
+	for k,v := range dataToPut.DataStored{
+		data,exito := receive.Data.getData(k)
+		if exito {
+			
+			//Success getting the data
+			exito = receive.Data.deleteData(k)
+			if exito {
+				
+				//Success while deleting data
+				exito = receive.Data.StoreData(k,v.Value,v.Original)
+				if !exito {
+					
+					//Failed while updating data -> we restore the old one
+					receive.Data.StoreData(k,data.Value,data.Original)
+				}
+			}
+		}
+	}
+	receive.SendPutDataAnswer(message.Source,idPutData,exito)
+}
+
+func (receive *DHTNode) receivePutDataHttpAnswer(message Msg){
+	idPutData,_ := strconv.Atoi(message.Args["putDataId"])
+	receive.PutDataRequest[idPutData] <- message.Args["bool"] == "true"
+}
+
+func (receive *DHTNode) receiveDeleteDataHttp(message Msg){
+	idDeleteData := message.Args["deleteDataId"]
+	dataToDelete := message.Data
+	var exito bool
+	for k,_ := range dataToDelete.DataStored{
+		exito = receive.Data.deleteData(k)
+		if exito {
+			receive.SendDeleteDataSuc(receive.Successor,dataToDelete)
+		}
+	}
+	receive.SendDeleteDataAnswer(message.Source,idDeleteData,exito)
+}
+
+func (receive *DHTNode) receiveDeleteDataHttpAnswer(message Msg){
+	idDeleteData,_ := strconv.Atoi(message.Args["deleteDataId"])
+	receive.SetDataRequest[idDeleteData] <- message.Args["bool"] == "true"
 }
