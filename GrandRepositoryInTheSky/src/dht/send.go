@@ -201,7 +201,6 @@ func SendDataToRingForeign(destIP string, destPort string,data DataSet){
 				Type: "ADDDATA",
 				Args: nil,
  				Data: data}
-	fmt.Println("Enviamos")
 	Send(auxNetwork,mess)
 }
 
@@ -345,4 +344,37 @@ func SendDeleteDataForeign(destIP string, destPort string,data DataSet){
 				Args: nil,
  				Data: data}
 	Send(auxNetwork,mess)
+}
+
+func (dhtNode *DHTNode) SendSetDataWithAnswer(dest *NetworkNode, data DataSet)chan bool {
+												
+		
+	/* We need a channel to save the answer */
+	dhtNode.mutexSetData.Lock()
+	numSetDataString := strconv.Itoa(dhtNode.NumSetData)
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+				Dest: dest,
+				Type: "SETDATAHTTP",
+				Args: map[string]string{
+					"setDataId": numSetDataString},
+				Data: data}
+	answerChannel := make(chan bool)
+	dhtNode.SetDataRequest[dhtNode.NumSetData] = answerChannel
+	dhtNode.NumSetData++
+	dhtNode.mutexSetData.Unlock()
+	Send(dest, mess)
+	return answerChannel
+}
+
+func (dhtNode *DHTNode) SendSetDataAnswer(dest *NetworkNode, idSetData string, exito bool){
+	
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+				Dest: dest,
+				Type: "SETDATAHTTPANSWER",
+				Args: map[string]string{
+					"setDataId": idSetData,
+					"bool": strconv.FormatBool(exito)},
+				Data: DataSet{}}
+	
+	Send(dest,mess)
 }
