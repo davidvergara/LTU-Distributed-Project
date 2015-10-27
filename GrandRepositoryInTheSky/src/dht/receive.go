@@ -410,5 +410,5 @@ func (receive *DHTNode) receiveDeleteDataHttp(message Msg){
 
 func (receive *DHTNode) receiveDeleteDataHttpAnswer(message Msg){
 	idDeleteData,_ := strconv.Atoi(message.Args["deleteDataId"])
-	receive.SetDataRequest[idDeleteData] <- message.Args["bool"] == "true"
+	receive.DeleteDataRequest[idDeleteData] <- message.Args["bool"] == "true"
 }
