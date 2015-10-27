@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"encoding/json"
 	"strconv"
-//	"time"
 )
 
 //Starts a go function that will be receiving messages
@@ -25,47 +24,19 @@ func (receive *DHTNode) StartListenServer(){
 	}
 	
 	go func() {
-		
-//		if receive.GetPort() == "1200" {
-//			tick := time.Tick(40000 * time.Millisecond)
-//			fmt.Println("Entering")
-//
-//			for {
-//				fmt.Println("hey")
-//				
-//				buffer :=make([]byte,1024) 
-//				readed, err := conn.Read(buffer)
-//				if err != nil {
-//					panic(err)
-//				}
-//	
-//				message := buffer[0:readed]
-//	
-//				go receive.decryptMessage(message)
-//				runtime.Gosched()
-//				select{
-//					case <- tick: 
-//					fmt.Println("pam")
-//					break;
-//	//				case default 
-//				}
-//				fmt.Println("no nos hemos cargado el bucle")
-//			} 
-//		} else {
-			for {
-				
-				buffer :=make([]byte,1024) 
-				readed, err := conn.Read(buffer)
-				if err != nil {
-					panic(err)
-				}
-	
-				message := buffer[0:readed]
-	
-				go receive.decryptMessage(message)
-				runtime.Gosched()
-			} 
-//		}
+		for {
+			
+			buffer :=make([]byte,1024) 
+			readed, err := conn.Read(buffer)
+			if err != nil {
+				panic(err)
+			}
+
+			message := buffer[0:readed]
+
+			go receive.decryptMessage(message)
+			runtime.Gosched()
+		} 
 	}()
 	
 	go receive.StartHeartBeats()
@@ -336,6 +307,8 @@ func (receive *DHTNode) receiveAddData(message Msg){
 	}
 }
 
+//Receive message "SETDATAHTTP"
+//Stores the data passed as message and sends an answer to the source node
 func (receive *DHTNode) receiveSetDataHttp(message Msg){
 	idSetData := message.Args["setDataId"]
 	dataToInsert := message.Data
@@ -346,11 +319,15 @@ func (receive *DHTNode) receiveSetDataHttp(message Msg){
 	receive.SendSetDataAnswer(message.Source,idSetData,exito)
 }
 
+//Receive message "SETDATAHTTPANSWER"
+//Puts in the result of the operation setData in the corresponding channel
 func (receive *DHTNode) receiveSetDataHttpAnswer(message Msg){
 	idSetData,_ := strconv.Atoi(message.Args["setDataId"])
 	receive.SetDataRequest[idSetData] <- message.Args["bool"] == "true"
 }
 
+//Receive message "PUTDATAHTTP"
+//Updates the data passed as message and sends an answer to the source node
 func (receive *DHTNode) receivePutDataHttp(message Msg){
 	idPutData := message.Args["putDataId"]
 	dataToPut := message.Data
@@ -358,6 +335,8 @@ func (receive *DHTNode) receivePutDataHttp(message Msg){
 	for k,v := range dataToPut.DataStored{
 		exito = receive.Data.updateData(k,v.Value)
 		if exito {
+			
+			/* If data was updated successfully, then update the replica too */
 			data,_ := receive.Data.getData(k)
 			if data.Original{
 				if receive.Successor != nil {
@@ -367,32 +346,19 @@ func (receive *DHTNode) receivePutDataHttp(message Msg){
 				}
 			}
 		}
-//		
-//		data,exito := receive.Data.getData(k)
-//		if exito {
-//			
-//			//Success getting the data
-//			exito = receive.Data.deleteData(k)
-//			if exito {
-//				
-//				//Success while deleting data
-//				exito = receive.Data.StoreData(k,v.Value,v.Original)
-//				if !exito {
-//					
-//					//Failed while updating data -> we restore the old one
-//					receive.Data.StoreData(k,data.Value,data.Original)
-//				}
-//			}
-//		}
 	}
 	receive.SendPutDataAnswer(message.Source,idPutData,exito)
 }
 
+//Receive message "PUTDATAHTTPANSWER"
+//Puts in the result of the operation putData in the corresponding channel
 func (receive *DHTNode) receivePutDataHttpAnswer(message Msg){
 	idPutData,_ := strconv.Atoi(message.Args["putDataId"])
 	receive.PutDataRequest[idPutData] <- message.Args["bool"] == "true"
 }
 
+//Receive message "DELETEDATAHTTP"
+//Deletes the data passed in the message and sends an answer to the source node
 func (receive *DHTNode) receiveDeleteDataHttp(message Msg){
 	idDeleteData := message.Args["deleteDataId"]
 	dataToDelete := message.Data
@@ -401,6 +367,8 @@ func (receive *DHTNode) receiveDeleteDataHttp(message Msg){
 		exito = receive.Data.deleteData(k)
 		if exito {
 			if receive.Successor != nil {
+				
+				/* If data deleted successfully, delete the replica too */
 				receive.SendDeleteDataSuc(receive.Successor,dataToDelete)
 			}
 		}
@@ -408,6 +376,8 @@ func (receive *DHTNode) receiveDeleteDataHttp(message Msg){
 	receive.SendDeleteDataAnswer(message.Source,idDeleteData,exito)
 }
 
+//Receive message "DELETEDATAHTTPANSWER"
+//Puts in the result of the operation deleteData in the corresponding channel
 func (receive *DHTNode) receiveDeleteDataHttpAnswer(message Msg){
 	idDeleteData,_ := strconv.Atoi(message.Args["deleteDataId"])
 	receive.DeleteDataRequest[idDeleteData] <- message.Args["bool"] == "true"

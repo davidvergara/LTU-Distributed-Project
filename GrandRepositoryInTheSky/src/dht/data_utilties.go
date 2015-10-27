@@ -47,6 +47,8 @@ func (dataSet DataSet) deleteData(key string) bool{
 	}
 }
 
+//Updates the data with the key passed as parameter from the dataset.
+//value: its new value
 func (dataSet DataSet) updateData(key string, value string) bool {
 	data,is := dataSet.getData(key)
 	if is{
@@ -69,7 +71,7 @@ func (dataSet DataSet) getData(key string) (Data, bool){
 	} else{
 		
 		/* Data is not stored */
-		fmt.Println("Error: data with key \"" + key + "\"can't be found")
+		fmt.Println("Error: data with key \"" + key + "\" can't be found")
 		return Data{"",false}, false
 	}
 }

@@ -358,6 +358,8 @@ func SendDeleteDataForeign(destIP string, destPort string,data DataSet){
 	Send(auxNetwork,mess)
 }
 
+//Sends the destination a SETDATAHTTP message
+//data: data to store in that node
 func (dhtNode *DHTNode) SendSetDataWithAnswer(dest *NetworkNode, data DataSet)chan bool {
 												
 		
@@ -378,6 +380,9 @@ func (dhtNode *DHTNode) SendSetDataWithAnswer(dest *NetworkNode, data DataSet)ch
 	return answerChannel
 }
 
+//Sends the destination a SETDATAHTTPANSWER
+//idSetData: number of set data request
+//exito: true if data was inserted successfully. Otherwise, false
 func (dhtNode *DHTNode) SendSetDataAnswer(dest *NetworkNode, idSetData string, exito bool){
 	
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
@@ -391,6 +396,8 @@ func (dhtNode *DHTNode) SendSetDataAnswer(dest *NetworkNode, idSetData string, e
 	Send(dest,mess)
 }
 
+//Sends the destination a PUTDATAHTTP message
+//data: data to update in the destination node
 func (dhtNode *DHTNode) SendPutDataWithAnswer(dest *NetworkNode, data DataSet)chan bool {
 												
 		
@@ -411,6 +418,9 @@ func (dhtNode *DHTNode) SendPutDataWithAnswer(dest *NetworkNode, data DataSet)ch
 	return answerChannel
 }
 
+//Sends the destination a PUTDATAHTTPANSWER
+//idPutData: number of put data request
+//exito: true if data was updated successfully. Otherwise, false
 func (dhtNode *DHTNode) SendPutDataAnswer(dest *NetworkNode, idPutData string, exito bool){
 	
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
@@ -424,6 +434,8 @@ func (dhtNode *DHTNode) SendPutDataAnswer(dest *NetworkNode, idPutData string, e
 	Send(dest,mess)
 }
 
+//Sends the destination a DELETEDATAHTTP message
+//data: data to delete in the destination node
 func (dhtNode *DHTNode) SendDeleteDataWithAnswer(dest *NetworkNode, data DataSet)chan bool {
 												
 		
@@ -444,6 +456,9 @@ func (dhtNode *DHTNode) SendDeleteDataWithAnswer(dest *NetworkNode, data DataSet
 	return answerChannel
 }
 
+//Sends the destination a DELETEDATAHTTPANSWER
+//idDeleteData: number of delete data request
+//exito: true if data was deleted successfully. Otherwise, false
 func (dhtNode *DHTNode) SendDeleteDataAnswer(dest *NetworkNode, idDeleteData string, exito bool){
 	
 	mess := Msg{Source: dhtNode.ToNetworkNode(),
