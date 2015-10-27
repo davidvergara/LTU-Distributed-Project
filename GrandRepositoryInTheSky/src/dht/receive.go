@@ -156,6 +156,18 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		{
 			receive.receiveDeleteData(message)
 		}
+		case message.Type == "DELETEDATASUC":
+		{
+			receive.receiveDeleteDataSuc(message)
+		}
+		case message.Type == "DELETEDATAHTTP":
+		{
+			receive.receiveDeleteDataHttp(message)
+		}
+		case message.Type == "DELETEDATAHTTPANSWER":
+		{
+			receive.receiveDeleteDataHttpAnswer(message)
+		}
 		case message.Type == "ADDDATA":
 		{
 			receive.receiveAddData(message)
@@ -291,10 +303,19 @@ func (receive *DHTNode) receiveGetDataAnswer (message Msg){
 }
 
 //Receive message "DELETEDATA"
-//Deletes all the data specified
+//Deletes all the data specified and tells its successor to do the same
 func (receive *DHTNode) receiveDeleteData(message Msg){
 	dataToDelete := message.Data
-	receive.SendDeleteData(receive.Successor, dataToDelete)
+	receive.SendDeleteDataSuc(receive.Successor, dataToDelete)
+	for k,_ := range dataToDelete.DataStored{
+		receive.Data.deleteData(k)
+	}
+}
+
+//Receive message "DELETEDATASUC"
+//Deletes all the data specified
+func (receive *DHTNode) receiveDeleteDataSuc(message Msg){
+	dataToDelete := message.Data
 	for k,_ := range dataToDelete.DataStored{
 		receive.Data.deleteData(k)
 	}
@@ -354,4 +375,22 @@ func (receive *DHTNode) receivePutDataHttp(message Msg){
 func (receive *DHTNode) receivePutDataHttpAnswer(message Msg){
 	idPutData,_ := strconv.Atoi(message.Args["putDataId"])
 	receive.PutDataRequest[idPutData] <- message.Args["bool"] == "true"
+}
+
+func (receive *DHTNode) receiveDeleteDataHttp(message Msg){
+	idDeleteData := message.Args["deleteDataId"]
+	dataToDelete := message.Data
+	var exito bool
+	for k,_ := range dataToDelete.DataStored{
+		exito = receive.Data.deleteData(k)
+		if exito {
+			receive.SendDeleteDataSuc(receive.Successor,dataToDelete)
+		}
+	}
+	receive.SendDeleteDataAnswer(message.Source,idDeleteData,exito)
+}
+
+func (receive *DHTNode) receiveDeleteDataHttpAnswer(message Msg){
+	idDeleteData,_ := strconv.Atoi(message.Args["deleteDataId"])
+	receive.SetDataRequest[idDeleteData] <- message.Args["bool"] == "true"
 }

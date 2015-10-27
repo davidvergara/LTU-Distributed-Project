@@ -48,6 +48,8 @@ type DHTNode struct {
 	SetDataRequest map[int]chan bool
 	NumPutData int
 	PutDataRequest map[int]chan bool
+	NumDeleteData int
+	DeleteDataRequest map[int]chan bool
 	
 	/* Mutex part */
 	mutexNumLookup  sync.Mutex
@@ -58,6 +60,7 @@ type DHTNode struct {
 	mutexNumGetData sync.Mutex
 	mutexSetData sync.Mutex
 	mutexPutData sync.Mutex
+	mutexDeleteData sync.Mutex
 }
 
 /* Finger struct */
@@ -90,6 +93,8 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.NumHeartBeat=0
 	dhtNode.NumGetData=0
 	dhtNode.NumSetData=0
+	dhtNode.NumPutData=0
+	dhtNode.NumDeleteData=0
 	//dhtNode.LookupRequest= make map[int]chan *NetworkNode
 
 	//var LookupRequest 	map[int]chan *NetworkNode
@@ -100,6 +105,8 @@ func MakeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.HeartBeatRequest = make(map[int]chan *NetworkNode)
 	dhtNode.GetDataRequest = make(map[int]chan DataSet)
 	dhtNode.SetDataRequest = make(map[int]chan bool)
+	dhtNode.PutDataRequest = make(map[int]chan bool)
+	dhtNode.DeleteDataRequest = make(map[int]chan bool)
 	
 	return dhtNode
 }

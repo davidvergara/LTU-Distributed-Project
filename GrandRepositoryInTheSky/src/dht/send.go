@@ -332,6 +332,18 @@ func (dhtNode *DHTNode) SendDeleteData(dest *NetworkNode, datasetToSend DataSet)
 		Send(dest,mess)
 }
 
+//Sends the destination node a DELETEDATA message
+func (dhtNode *DHTNode) SendDeleteDataSuc(dest *NetworkNode, datasetToSend DataSet){
+	
+		mess := Msg{Source: dhtNode.ToNetworkNode(),
+			Dest: dest,
+	 		Type: "DELETEDATASUC", 
+	 		Args: nil,
+ 			Data: datasetToSend} 
+		
+		Send(dest,mess)
+}
+
 //Sends the destination ip:port node a DELETEDATA message
 func SendDeleteDataForeign(destIP string, destPort string,data DataSet){
 	auxNetwork := new(NetworkNode)
@@ -406,6 +418,39 @@ func (dhtNode *DHTNode) SendPutDataAnswer(dest *NetworkNode, idPutData string, e
 				Type: "PUTDATAHTTPANSWER",
 				Args: map[string]string{
 					"putDataId": idPutData,
+					"bool": strconv.FormatBool(exito)},
+				Data: DataSet{}}
+	
+	Send(dest,mess)
+}
+
+func (dhtNode *DHTNode) SendDeleteDataWithAnswer(dest *NetworkNode, data DataSet)chan bool {
+												
+		
+	/* We need a channel to save the answer */
+	dhtNode.mutexDeleteData.Lock()
+	numDeleteDataString := strconv.Itoa(dhtNode.NumDeleteData)
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+				Dest: dest,
+				Type: "DELETEDATAHTTP",
+				Args: map[string]string{
+					"deleteDataId": numDeleteDataString},
+				Data: data}
+	answerChannel := make(chan bool)
+	dhtNode.DeleteDataRequest[dhtNode.NumDeleteData] = answerChannel
+	dhtNode.NumDeleteData++
+	dhtNode.mutexDeleteData.Unlock()
+	Send(dest, mess)
+	return answerChannel
+}
+
+func (dhtNode *DHTNode) SendDeleteDataAnswer(dest *NetworkNode, idDeleteData string, exito bool){
+	
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+				Dest: dest,
+				Type: "DELETEDATAHTTPANSWER",
+				Args: map[string]string{
+					"deleteDataId": idDeleteData,
 					"bool": strconv.FormatBool(exito)},
 				Data: DataSet{}}
 	
