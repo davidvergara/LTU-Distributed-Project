@@ -378,3 +378,36 @@ func (dhtNode *DHTNode) SendSetDataAnswer(dest *NetworkNode, idSetData string, e
 	
 	Send(dest,mess)
 }
+
+func (dhtNode *DHTNode) SendPutDataWithAnswer(dest *NetworkNode, data DataSet)chan bool {
+												
+		
+	/* We need a channel to save the answer */
+	dhtNode.mutexPutData.Lock()
+	numPutDataString := strconv.Itoa(dhtNode.NumPutData)
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+				Dest: dest,
+				Type: "PUTDATAHTTP",
+				Args: map[string]string{
+					"putDataId": numPutDataString},
+				Data: data}
+	answerChannel := make(chan bool)
+	dhtNode.SetDataRequest[dhtNode.NumPutData] = answerChannel
+	dhtNode.NumPutData++
+	dhtNode.mutexPutData.Unlock()
+	Send(dest, mess)
+	return answerChannel
+}
+
+func (dhtNode *DHTNode) SendPutDataAnswer(dest *NetworkNode, idPutData string, exito bool){
+	
+	mess := Msg{Source: dhtNode.ToNetworkNode(),
+				Dest: dest,
+				Type: "PUTDATAHTTPANSWER",
+				Args: map[string]string{
+					"putDataId": idPutData,
+					"bool": strconv.FormatBool(exito)},
+				Data: DataSet{}}
+	
+	Send(dest,mess)
+}

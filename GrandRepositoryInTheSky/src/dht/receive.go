@@ -160,6 +160,14 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		{
 			receive.receiveAddData(message)
 		}
+		case message.Type == "PUTDATAHTTP":
+		{
+			receive.receivePutDataHttp(message)
+		}
+		case message.Type == "PUTDATAHTTPANSWER":
+		{
+			receive.receivePutDataHttpAnswer(message)
+		}
 		default: 
 		{
 			fmt.Println("Wrong message")
@@ -316,4 +324,34 @@ func (receive *DHTNode) receiveSetDataHttp(message Msg){
 func (receive *DHTNode) receiveSetDataHttpAnswer(message Msg){
 	idSetData,_ := strconv.Atoi(message.Args["setDataId"])
 	receive.SetDataRequest[idSetData] <- message.Args["bool"] == "true"
+}
+
+func (receive *DHTNode) receivePutDataHttp(message Msg){
+	idPutData := message.Args["putDataId"]
+	dataToPut := message.Data
+	var exito bool
+	for k,v := range dataToPut.DataStored{
+		data,exito := receive.Data.getData(k)
+		if exito {
+			
+			//Success getting the data
+			exito = receive.Data.deleteData(k)
+			if exito {
+				
+				//Success while deleting data
+				exito = receive.Data.StoreData(k,v.Value,v.Original)
+				if !exito {
+					
+					//Failed while updating data -> we restore the old one
+					receive.Data.StoreData(k,data.Value,data.Original)
+				}
+			}
+		}
+	}
+	receive.SendPutDataAnswer(message.Source,idPutData,exito)
+}
+
+func (receive *DHTNode) receivePutDataHttpAnswer(message Msg){
+	idPutData,_ := strconv.Atoi(message.Args["putDataId"])
+	receive.PutDataRequest[idPutData] <- message.Args["bool"] == "true"
 }

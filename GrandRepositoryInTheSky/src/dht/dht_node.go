@@ -46,6 +46,8 @@ type DHTNode struct {
 	GetDataRequest map[int]chan DataSet
 	NumSetData int
 	SetDataRequest map[int]chan bool
+	NumPutData int
+	PutDataRequest map[int]chan bool
 	
 	/* Mutex part */
 	mutexNumLookup  sync.Mutex
@@ -55,6 +57,7 @@ type DHTNode struct {
 	mutexPredOfPred	sync.Mutex
 	mutexNumGetData sync.Mutex
 	mutexSetData sync.Mutex
+	mutexPutData sync.Mutex
 }
 
 /* Finger struct */
