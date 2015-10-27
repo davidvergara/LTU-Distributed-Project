@@ -360,9 +360,11 @@ func (receive *DHTNode) receivePutDataHttp(message Msg){
 		if exito {
 			data,_ := receive.Data.getData(k)
 			if data.Original{
-				dataToPut.changeOriginalReplica(k)
-				receive.SendDeleteDataSuc(receive.Successor,dataToPut)
-				receive.SendSetData(receive.Successor,dataToPut)
+				if receive.Successor != nil {
+					dataToPut.changeOriginalReplica(k)
+					receive.SendDeleteDataSuc(receive.Successor,dataToPut)
+					receive.SendSetData(receive.Successor,dataToPut)
+				}
 			}
 		}
 //		
