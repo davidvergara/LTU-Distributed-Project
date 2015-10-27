@@ -136,6 +136,14 @@ func (receive *DHTNode) decryptMessage (bytesReceived []byte){
 		{
 			receive.receiveSetData(message)
 		}
+		case message.Type == "SETDATAHTTP":
+		{
+			receive.receiveSetDataHttp(message)
+		}
+		case message.Type == "SETDATAHTTPANSWER":
+		{
+			receive.receiveSetDataHttpAnswer(message)
+		}
 		case message.Type == "GETDATA":
 		{
 			receive.receiveGetData(message)
@@ -293,4 +301,19 @@ func (receive *DHTNode) receiveAddData(message Msg){
 		dataSetToBeSend.StoreData(k,v.Value,true)
 		receive.SendSetData(nodeResponsible, dataSetToBeSend)
 	}
+}
+
+func (receive *DHTNode) receiveSetDataHttp(message Msg){
+	idSetData := message.Args["setDataId"]
+	dataToInsert := message.Data
+	var exito bool
+	for k,v := range dataToInsert.DataStored{
+		exito = receive.Data.StoreData(k,v.Value,v.Original)
+	}
+	receive.SendSetDataAnswer(message.Source,idSetData,exito)
+}
+
+func (receive *DHTNode) receiveSetDataHttpAnswer(message Msg){
+	idSetData,_ := strconv.Atoi(message.Args["setDataId"])
+	receive.SetDataRequest[idSetData] <- message.Args["bool"] == "true"
 }
