@@ -157,6 +157,7 @@ func task31(){
 		id := os.Args[4]
 		fmt.Println("Connecting node " + port + " to node " + portToConnect)
 		node0b := dht.MakeDHTNode(&id, "localhost", port)
+		node0b.InitializeWebServer(port)
 		node0b.StartListenServer()
 		dht.SendAddToRingForeign("localhost",portToConnect,node0b.ToNetworkNode())
 		for {
