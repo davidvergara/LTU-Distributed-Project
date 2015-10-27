@@ -676,6 +676,10 @@ func (dhtNode *DHTNode) StartUpdateFingersRoutine(){
 	}
 }
 
+//Add a pair [key,value] to a node
+//The key and value are inserted as parameter
+//Return true if all was correct and the node where was inserted the pair
+//Return false if something failed
 func (dhtNode *DHTNode) HttpPost(key string, value string) (bool, *NetworkNode){
 	nodeResponsible := dhtNode.Lookup(key, dhtNode.ToNetworkNode(), "")
 	dataSetToBeSend :=MakeDataSet()
@@ -693,6 +697,10 @@ func (dhtNode *DHTNode) HttpPost(key string, value string) (bool, *NetworkNode){
 	}
 }
 
+//Find a key insterted as parameter in the ring
+//Return true if the key exists, the Data of the key and
+//the node where is it saved
+//If the key does not exist return false
 func (dhtNode *DHTNode) HttpGet(key string) (bool, string, *NetworkNode){
 	nodeResponsible := dhtNode.Lookup(key, dhtNode.ToNetworkNode(), "")
 	
@@ -709,6 +717,10 @@ func (dhtNode *DHTNode) HttpGet(key string) (bool, string, *NetworkNode){
 	}
 }
 
+//Update the value of the data of a key
+//The key and the value are inserted as parameter
+//Return true if all was correct and the node where was made the update
+//Return false if there was an error
 func (dhtNode *DHTNode) HttpPut(key string, value string) (bool, *NetworkNode){
 	nodeResponsible := dhtNode.Lookup(key, dhtNode.ToNetworkNode(), "")
 	dataSetToBeSend :=MakeDataSet()
@@ -725,6 +737,11 @@ func (dhtNode *DHTNode) HttpPut(key string, value string) (bool, *NetworkNode){
 	}
 }
 
+//Delete a pain [key,value] of the ring
+//The key is inserted as parameter
+//Return true and the node where was deleted the pair if all was
+//correct
+//Return false if there was an error
 func (dhtNode *DHTNode) HttpDelete(key string) (bool, *NetworkNode){
 	nodeResponsible := dhtNode.Lookup(key, dhtNode.ToNetworkNode(), "")
 	dataSetToBeSend :=MakeDataSet()

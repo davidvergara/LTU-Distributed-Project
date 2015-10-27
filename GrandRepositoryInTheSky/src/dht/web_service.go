@@ -7,6 +7,9 @@ import (
 	//"strconv"
 )
 
+//The function intitializes the functions that are going
+//to manage the post, get, put and delete petitions
+//from the web page
 func (node *DHTNode)InitializeWebServer(port string){
 	go func() {
 
@@ -27,6 +30,8 @@ func (node *DHTNode)InitializeWebServer(port string){
 	}()
 }
 
+//Initialize the html code that will be shown in the 
+//web page
 func InitializeHtml(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<body><h3>1.- Upload a new key-value pair</h3>" + 
 				"<form action=\"/chordnode/post/\" method=\"post\" >" + 
@@ -57,6 +62,11 @@ func InitializeHtml(w http.ResponseWriter, r *http.Request) {
 				"<p>Click on the submit button, and the input will be sent to the Chord network</p></body>")
 }
 
+//Post function
+//Add a key and value to a node
+//The key and the value are inserted by the user in the web page
+//The function looks where they have to be insert and inserts them
+//Finally shows a message saying how was the insertation
 func (node *DHTNode)Post(w http.ResponseWriter, r *http.Request) {
 	key := r.FormValue("key_value")
 	value := r.FormValue("value_value")
@@ -75,6 +85,10 @@ func (node *DHTNode)Post(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<p><a href=\"/chordnode/\">Back to main page</a></p>")
 }
 
+//Get function
+//Gives the data that contains a key
+//If the key does not exist shows an error
+//The user insert the key in the web page
 func (node *DHTNode)Get(w http.ResponseWriter, r *http.Request) {
 	key := r.FormValue("key_value")
 	fmt.Fprintf(w, "<body><h3>2.- Returns the value for a specific key</h3>")
@@ -94,6 +108,12 @@ func (node *DHTNode)Get(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<p><a href=\"/chordnode/\">Back to main page</a></p>")
 }
 
+//Put function
+//Update the value of a key
+//The key and the value are inserted by the user in the web page
+//The function looks where is the key saved and update the data there
+//If the key does not exist shows an error
+//If all were correct shows a message of confirmation
 func (node *DHTNode)Put(w http.ResponseWriter, r *http.Request) {
 	key := r.FormValue("key_value")
 	value := r.FormValue("value_value")
@@ -112,6 +132,12 @@ func (node *DHTNode)Put(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<p><a href=\"/chordnode/\">Back to main page</a></p>")
 }
 
+//Delete function
+//Delete the key and data of a key
+//The key is inserted by the user in the web page
+//The function looks where is the key saved and delete the key and the data
+//If the key does not exist shows an error
+//If all were correct shows a message of confirmation
 func (node *DHTNode)Delete(w http.ResponseWriter, r *http.Request) {
 	key := r.FormValue("key_value")
 	fmt.Fprintf(w, "<body><h3>4.- Delete a key-value pair with key</h3>")
