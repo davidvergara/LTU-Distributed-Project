@@ -1,3 +1,9 @@
+//Authors: Alejandro Márquez Ferrer / David Vergara Manrique
+//Date: 28/10/2015
+//
+//Description: This file contains the code related to the data in the chord ring,
+//defining its structure and making auxiliar methods.
+
 package dht
 
 import (

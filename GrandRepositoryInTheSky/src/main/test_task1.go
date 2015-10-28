@@ -1,3 +1,10 @@
+//Authors: Alejandro Márquez Ferrer / David Vergara Manrique
+//Date: 28/10/2015
+//
+//Description: This file contains the code used to make tests of the different parts
+//of the project. To test them, you have to uncomment the one you want to execute,
+//and comment the rest.
+
 package main
 
 import (

@@ -1,3 +1,8 @@
+//Authors: Alejandro Márquez Ferrer / David Vergara Manrique
+//Date: 28/10/2015
+//
+//Description: This file contains the code related to the web service which
+//function is put/get/update/delete data in the chord ring.
 
 package dht
 

@@ -1,3 +1,9 @@
+//Authors: Alejandro Márquez Ferrer / David Vergara Manrique
+//Date: 28/10/2015
+//
+//Description: This file contains the code related to receive and handle the
+//different messages, as well as functions for each type of message that can
+//be received.
 
 package dht
 

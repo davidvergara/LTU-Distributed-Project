@@ -1,3 +1,9 @@
+//Authors: Alejandro Márquez Ferrer / David Vergara Manrique
+//Date: 28/10/2015
+//
+//Description: This file contains the code related to each node. It is here where
+//the dht node is defined, and all operations related to them are in this file.
+
 package dht
 
 import (
@@ -426,6 +432,7 @@ func (dhtNode *DHTNode) PrintRing(){
 	
 	ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort()) + fmt.Sprintln(data)
 	
+	/* Uncomment to print fingers */
 //	ring = ring + dhtNode.PrintFingerTable()
 	if dhtNode.GetSuccessor() != nil {
 		
@@ -447,22 +454,9 @@ func (dhtNode *DHTNode) PrintRingAux(original *NetworkNode, ring string){
 			}
 		/* Not printed all the ring */
 		ring = ring + fmt.Sprintln("Node " + dhtNode.GetNodeId() + " - " + dhtNode.GetPort()) + fmt.Sprintln(data)
-//		ring = ring + dhtNode.PrintFingerTable()
-
-
-
-//		fmt.Println("-Predecessor: " + dhtNode.Predecessor.NodeId)
-//		fmt.Println("-Successor: " + dhtNode.Successor.NodeId)
-//		
-//		if dhtNode.PredOfPred != nil {
-//			fmt.Println("-PredOfPred: " + dhtNode.PredOfPred.NodeId)
-//		}
-//		fmt.Println("-SuccOfSucc: " + dhtNode.SuccOfSucc.NodeId)
 		
-		/* TO TEST PRINTING FINGER TABLE WITH TEST22() */
-//		if dhtNode.GetPort() == "1180" || dhtNode.GetPort() == "1160"{
-//			dhtNode.PrintFingerTable()
-//		}
+		/* Uncomment to print fingers */
+//		ring = ring + dhtNode.PrintFingerTable()
 
 		dhtNode.SendPrintRingAux(original, dhtNode.GetSuccessor(),ring)
 	} else{

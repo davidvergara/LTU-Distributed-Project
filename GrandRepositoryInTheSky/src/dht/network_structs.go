@@ -1,3 +1,9 @@
+//Authors: Alejandro Márquez Ferrer / David Vergara Manrique
+//Date: 28/10/2015
+//
+//Description: This file contains the code related to the NetworkNodes, and
+//an auxiliar function to change from dhtNode to networkNode.
+
 package dht
 
 import (

@@ -1,3 +1,11 @@
+//Authors: Alejandro Márquez Ferrer / David Vergara Manrique
+//Date: 28/10/2015
+//
+//Description: This file contains the code related to the sending of the 
+//messages. It contains a general sender method to send a messag to a
+//destination, and different sending methods to prepare the message according
+//to the different functions.
+
 package dht
 
 import (
